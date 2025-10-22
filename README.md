@@ -93,14 +93,6 @@ const result = await client.pushTransaction('hex-string');
 // Get address summary and statistics
 const summary = await client.getAddressSummary('bc1q...');
 
-// Get current BTC price with fallback
-try {
-  const price = await client.getBtcPrice();
-  console.log('Current BTC price:', price);
-} catch (error) {
-  console.error('Failed to get BTC price:', error.message);
-  // Default fallback value is handled automatically
-}
 ```
 
 ### Asset Management
@@ -222,9 +214,6 @@ const safeClient = createSafeClient();
 // Returns empty array on error
 const utxos = await safeClient.getUtxosByValueOrDefault(address, 1000);
 
-// Returns null on error for price
-const price = await safeClient.getBtcPriceOrDefault();
-console.log('Price:', price || 'No price available');
 ```
 
 ## 📊 Performance Monitoring

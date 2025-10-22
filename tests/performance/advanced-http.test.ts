@@ -156,7 +156,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
         // 第一次请求
         await httpClient.get(endpoint, {});
         const metricsAfterFirst = httpClient.getMetrics();
-        const cacheMissesAfterFirst = metricsAfterFirst.cacheMisses;
+        const _cacheMissesAfterFirst = metricsAfterFirst.cacheMisses;
 
         // 立即第二次请求（应该命中缓存）
         await httpClient.get(endpoint, {});

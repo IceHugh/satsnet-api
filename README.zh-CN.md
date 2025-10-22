@@ -89,9 +89,6 @@ const client = new SatsNetClient();
 const utxos = await client.getUtxos('bc1q...');
 console.log(utxos);
 
-// 获取 BTC 价格
-const price = await client.getBtcPrice();
-console.log(price);
 ```
 
 ### 自定义配置
@@ -150,9 +147,6 @@ const result = await client.pushTransaction(signedHex);
 ```typescript
 // 获取地址摘要和统计信息
 const summary = await client.getAddressSummary(address);
-
-// 获取 BTC 价格 (带容错处理，失败时返回默认值)
-const price = await client.getBtcPrice();
 
 // 获取最佳区块高度
 const height = await client.getBestHeight();

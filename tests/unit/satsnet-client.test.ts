@@ -205,23 +205,6 @@ describe('SatsNetClient - Network Operations', () => {
     );
   });
 
-  describe('getBtcPrice', () => {
-    it(
-      'should handle BTC price API gracefully',
-      async () => {
-        try {
-          const price = await client.getBtcPrice();
-          expect(price).toHaveProperty('price');
-          expect(price).toHaveProperty('currency');
-        } catch (error) {
-          // BTC价格API可能暂时不可用，这是可以接受的
-          expect(error).toBeDefined();
-        }
-      },
-      testConfig.timeout
-    );
-  });
-
   describe('healthCheck', () => {
     it(
       'should pass health check',

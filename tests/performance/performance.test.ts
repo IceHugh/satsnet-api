@@ -111,7 +111,6 @@ describe('SatsNet Performance Tests', () => {
           client.getRareUtxos(valid),
           client.getAddressSummary(valid),
           client.getBestHeight(),
-          client.getBtcPrice(),
           client.healthCheck(),
         ];
 
@@ -140,14 +139,13 @@ describe('SatsNet Performance Tests', () => {
           { method: 'getAddressSummary' as const, params: [valid] },
           { method: 'getUtxos' as const, params: [valid] },
           { method: 'getBestHeight' as const, params: [] },
-          { method: 'getBtcPrice' as const, params: [] },
           { method: 'healthCheck' as const, params: [] },
         ];
 
         const results = await client.batchRequest(batchRequests);
         const duration = Date.now() - startTime;
 
-        expect(results).toHaveLength(5);
+        expect(results).toHaveLength(4);
         expect(duration).toBeLessThan(15000); // 15秒内完成批量请求
         console.log(
           `Batch request with ${batchRequests.length} operations completed in ${duration}ms`
@@ -270,7 +268,6 @@ describe('SatsNet Performance Tests', () => {
         await client.getRareUtxos(valid);
         await client.getAddressSummary(valid);
         await client.getBestHeight();
-        await client.getBtcPrice();
 
         // 再次请求相同的数据以使用缓存
         await client.getUtxos(valid);

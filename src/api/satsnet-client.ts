@@ -1,4 +1,5 @@
 import {
+  type AddressAssetItem,
   type ApiConfig,
   type AssetHolder,
   type BestHeightResponse,
@@ -30,7 +31,6 @@ export type BatchRequestMethod =
   | 'getTransactionHex'
   | 'pushTransaction'
   | 'getAddressSummary'
-  | 'getBtcPrice'
   | 'getBestHeight'
   | 'getTickerInfo'
   | 'getTickerHolders'
@@ -220,27 +220,6 @@ export class SatsNetClient {
   }
 
   /**
-   * Get BTC price
-   * @returns Promise with BTC price data
-   */
-  async getBtcPrice(): Promise<{ price: number; currency: string }> {
-    try {
-      const result = await this.httpClient.get<{
-        price: number;
-        currency: string;
-      }>('ordx/GetBTCPrice', {});
-      return result;
-    } catch (error) {
-      // 如果请求失败，返回默认价格结构而不是抛出错误
-      // 这是价格查询的特殊处理，保证应用可以继续运行
-      if (error instanceof SatsnetApiError) {
-        console.warn('Failed to get BTC price, using default:', error.message);
-      }
-      return { price: 0, currency: 'USD' };
-    }
-  }
-
-  /**
    * Get best block height
    * @returns Promise with block height
    */
@@ -392,8 +371,6 @@ export class SatsNetClient {
           return () => this.pushTransaction(params[0] as string);
         case 'getAddressSummary':
           return () => this.getAddressSummary(params[0] as string);
-        case 'getBtcPrice':
-          return () => this.getBtcPrice();
         case 'getBestHeight':
           return () => this.getBestHeight();
         case 'getTickerInfo':

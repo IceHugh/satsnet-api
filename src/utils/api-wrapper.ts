@@ -83,15 +83,7 @@ export class SafeSatsNetClient {
     return tryit(() => this.client.getAddressSummary(address))();
   }
 
-  // --- Fee and Network ---
-
-  /**
-   * Get BTC price with default
-   * @returns Price data or null on error
-   */
-  async getBtcPriceOrDefault() {
-    return tryitOrDefault(() => this.client.getBtcPrice(), null)();
-  }
+  // --- Network ---
 
   /**
    * Get best height

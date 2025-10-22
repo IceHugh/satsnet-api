@@ -45,10 +45,7 @@ async function firstExample() {
     console.log('找到 UTXO 数量:', utxos.plainutxos.length);
     console.log('总金额:', utxos.total);
 
-    // 获取 BTC 价格
-    const price = await satsnet.getBtcPrice();
-    console.log('BTC 价格:', price);
-
+    
   } catch (error) {
     console.error('请求失败:', error.message);
   }
@@ -110,7 +107,6 @@ async function batchExample() {
   const batchRequests = [
     { method: 'getUtxos', params: [address] },
     { method: 'getAddressSummary', params: [address] },
-    { method: 'getBtcPrice', params: [] },
     { method: 'getBestHeight', params: [] }
   ];
 
@@ -118,7 +114,7 @@ async function batchExample() {
     // 并行执行批量请求
     const results = await client.batchRequest(batchRequests);
 
-    const [utxos, summary, price, height] = results;
+    const [utxos, summary, height] = results;
 
     console.log('批量请求结果:');
     console.log('- UTXO 数量:', utxos.plainutxos.length);

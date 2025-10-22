@@ -68,9 +68,8 @@ graph TD
    - `getTransactionHex(txid)`: 获取交易十六进制数据
    - `pushTransaction(hex)`: 推送签名交易
 
-3. **地址和网络服务** (行 280-333)
+3. **地址和网络服务** (行 270-320)
    - `getAddressSummary(address)`: 地址摘要和统计
-   - `getBtcPrice()`: BTC价格查询 (带容错)
    - `getBestHeight()`: 最佳区块高度
    - `healthCheck()`: API健康检查
 
@@ -185,7 +184,7 @@ tests/
 - 使用自定义 SatsnetApiError 提供结构化错误
 - 每个公共方法都应该包含适当的验证
 - 错误消息应清晰、具体，包含错误代码
-- 关键功能提供容错机制 (如 getBtcPrice)
+- 为关键功能提供容错机制
 
 ### 性能优化规范
 - 使用 undici 作为主要 HTTP 客户端

@@ -236,14 +236,6 @@ interface FeeRates {
 }
 ```
 
-### getBtcPrice
-
-获取 BTC 价格。
-
-```typescript
-async getBtcPrice(): Promise<number>
-```
-
 ### getBestHeight
 
 获取最佳区块高度。
@@ -591,7 +583,7 @@ const results = await client.batchRequest(batchRequests);
 ```typescript
 type BatchRequestMethod =
   | 'getUtxos' | 'getPlainUtxos' | 'getRareUtxos' | 'getUtxo' | 'getUtxosByValue'
-  | 'getTransactionHex' | 'pushTransaction' | 'getAddressSummary' | 'getBtcPrice'
+  | 'getTransactionHex' | 'pushTransaction' | 'getAddressSummary'
   | 'getBestHeight' | 'getTickerInfo' | 'getTickerHolders' | 'getAddressAssetHolders'
   | 'getNameInfo' | 'getNameListByAddress' | 'getNameSubUtxos' | 'healthCheck';
 ```
