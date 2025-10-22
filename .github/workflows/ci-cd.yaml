@@ -84,10 +84,14 @@ jobs:
       - name: 验证下载的构建产物
         run: |
           echo "检查下载的构建产物..."
-          find . -name "dist" -type d | while read dir; do
-            echo "找到 dist 目录: $dir"
-            ls -la "$dir" || echo "目录为空或不存在"
-          done
+          ls -la ./
+          if [ -d "dist" ]; then
+            echo "✅ 找到 dist 目录"
+            ls -la dist/
+          else
+            echo "❌ 未找到 dist 目录，显示当前目录内容："
+            find . -type f -name "*.js" -o -name "*.d.ts" | head -10
+          fi
 
       - name: 获取包信息
         id: package-info
