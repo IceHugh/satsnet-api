@@ -1,0 +1,93 @@
+{
+  "name": "satsnet-api",
+  "version": "1.0.0",
+  "author": "icehugh <ygz14835187@163.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/icehugh/satsnet-api.git"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "dependencies": {
+    "radash": "^12.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/bun": "^1.3.0",
+    "@types/node": "^20.10.0",
+    "bun-types": "latest",
+    "tsc-alias": "^1.8.16",
+    "terser": "^5.36.0",
+    "typescript": "^5.3.0",
+    "undici": "^7.16.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/icehugh/satsnet-api/issues"
+  },
+  "description": "A high-performance satsnet protocol API library built with Bun, TypeScript, undici, and radash",
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/icehugh/satsnet-api#readme",
+  "keywords": [
+    "satsnet",
+    "bitcoin",
+    "api",
+    "blockchain",
+    "ordinals",
+    "utxo",
+    "typescript",
+    "bun"
+  ],
+  "license": "MIT",
+  "peerDependenciesMeta": {
+    "undici": {
+      "optional": false
+    }
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --splitting --external undici && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:cjs": "bun build src/index.ts --outdir dist --target node --format cjs --external undici --outfile index.cjs && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:prod": "bun run clean && bun run build:prod:esm && bun run build:prod:cjs && bun run build:types && bun run minify",
+    "build:prod:esm": "bun build src/index.ts --outdir dist --target node --format esm --splitting --external undici --minify",
+    "build:prod:cjs": "bun build src/index.ts --target node --format cjs --external undici --outfile dist/index.cjs --minify",
+    "build:types": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "minify": "bun run minify:esm && bun run minify:cjs",
+    "minify:esm": "terser dist/index.js --compress --mangle --source-map --output dist/index.min.js",
+    "minify:cjs": "terser dist/index.cjs --compress --mangle --source-map --output dist/index.min.cjs",
+    "build:analyze": "bun run build:prod && bun --bun scripts/analyze-bundle.js",
+    "dev": "bun --watch src/index.ts",
+    "start": "bun dist/index.js",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "test:unit": "bun test tests/unit",
+    "test:integration": "bun test tests/integration",
+    "test:performance": "bun test tests/performance",
+    "test:api-types": "bun run scripts/run-api-tests.ts",
+    "type-check": "tsc --noEmit",
+    "lint": "bunx @biomejs/biome check src/ tests/",
+    "lint:fix": "bunx @biomejs/biome check --apply src/ tests/",
+    "audit": "bun audit",
+    "audit:fix": "bun audit --fix",
+    "clean": "rm -rf dist"
+  },
+  "type": "module",
+  "types": "dist/index.d.ts"
+}
