@@ -81,9 +81,48 @@ jobs:
           name: build-artifacts
           path: ./
 
+      - name: 重新组织构建产物到dist目录
+        run: |
+          echo "重新组织构建产物..."
+
+          # 创建dist目录
+          mkdir -p dist
+
+          # 移动主要构建文件到dist目录
+          for file in index.js index.cjs index.d.ts index.d.ts.map; do
+            if [ -f "$file" ]; then
+              echo "移动文件: $file -> dist/$file"
+              mv "$file" dist/
+            else
+              echo "警告: 文件 $file 不存在"
+            fi
+          done
+
+          # 移动压缩文件到dist目录
+          for file in index.min.* index.min.cjs.*; do
+            if [ -f "$file" ]; then
+              echo "移动压缩文件: $file -> dist/$file"
+              mv "$file" dist/
+            fi
+          done
+
+          # 移动目录到dist目录
+          for dir in api types utils; do
+            if [ -d "$dir" ]; then
+              echo "移动目录: $dir -> dist/$dir"
+              mv "$dir" dist/
+            else
+              echo "警告: 目录 $dir 不存在"
+            fi
+          done
+
+          echo "构建产物重新组织完成"
+          echo "dist目录内容："
+          ls -la dist/
+
       - name: 验证下载的构建产物
         run: |
-          echo "检查下载的构建产物..."
+          echo "检查重新组织后的构建产物..."
           ls -la ./
           if [ -d "dist" ]; then
             echo "✅ 找到 dist 目录"
@@ -91,6 +130,7 @@ jobs:
           else
             echo "❌ 未找到 dist 目录，显示当前目录内容："
             find . -type f -name "*.js" -o -name "*.d.ts" | head -10
+            exit 1
           fi
 
       - name: 获取包信息
@@ -122,15 +162,24 @@ jobs:
           echo "当前目录内容："
           ls -la ./
 
+          # 检查dist目录是否存在
+          if [ ! -d "dist" ]; then
+            echo "❌ 未找到 dist 目录"
+            exit 1
+          fi
+
+          echo "dist目录内容："
+          ls -la dist/
+
           # 检查关键的构建文件是否存在
           REQUIRED_FILES=("index.js" "index.cjs" "index.d.ts")
           ALL_FILES_EXIST=true
 
           for file in "${REQUIRED_FILES[@]}"; do
-            if [ -f "$file" ]; then
-              echo "✅ 找到文件: $file"
+            if [ -f "dist/$file" ]; then
+              echo "✅ 找到文件: dist/$file"
             else
-              echo "❌ 缺少文件: $file"
+              echo "❌ 缺少文件: dist/$file"
               ALL_FILES_EXIST=false
             fi
           done
@@ -138,10 +187,10 @@ jobs:
           # 检查必要的目录是否存在
           REQUIRED_DIRS=("api" "types" "utils")
           for dir in "${REQUIRED_DIRS[@]}"; do
-            if [ -d "$dir" ]; then
-              echo "✅ 找到目录: $dir"
+            if [ -d "dist/$dir" ]; then
+              echo "✅ 找到目录: dist/$dir"
             else
-              echo "❌ 缺少目录: $dir"
+              echo "❌ 缺少目录: dist/$dir"
               ALL_FILES_EXIST=false
             fi
           done
