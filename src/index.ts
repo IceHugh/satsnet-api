@@ -6,50 +6,48 @@
 
 // Export main client
 export { SatsNetClient } from '@/api/satsnet-client';
-
-// Export safe client with built-in error handling
-export { SafeSatsNetClient, createSafeClient, safeSatsnet } from '@/utils/api-wrapper';
-
 // Export types
 export type {
-  Network,
-  Chain,
-  ApiResponse,
-  Utxo,
-  EnhancedUtxo,
-  UtxoResponse,
-  TransactionRaw,
-  AddressSummary,
   AddressAssetItem,
-  FeeRates,
-  TickerInfo,
-  TickerName,
+  AddressSummary,
+  ApiConfig,
+  ApiResponse,
   AssetHolder,
+  BestHeightResponse,
+  Chain,
+  EnhancedUtxo,
+  EnhancedUtxoResponse,
+  EnvironmentConfig,
+  FeeRates,
+  HealthCheckResponse,
+  NameInfoResponse,
   NameService,
   NameServiceListResponse,
-  HealthCheckResponse,
-  BestHeightResponse,
-  EnhancedUtxoResponse,
-  TransactionHexResponse,
-  NameInfoResponse,
+  Network,
+  NetworkConfig,
   PaginationParams,
   RequestParams,
-  ApiConfig,
   SatsnetApiError,
-  NetworkConfig,
-  EnvironmentConfig,
+  TickerInfo,
+  TickerName,
+  TransactionHexResponse,
+  TransactionRaw,
+  Utxo,
+  UtxoResponse,
 } from '@/types';
+// Export safe client with built-in error handling
+export { createSafeClient, SafeSatsNetClient, safeSatsnet } from '@/utils/api-wrapper';
 
 // Export utilities
 export { ErrorHandler } from '@/utils/errors';
 export { HttpClient } from '@/utils/http';
 export {
-  tryit,
-  tryitWithRetry,
-  tryitOrDefault,
-  tryitAll,
   isError,
   isSuccess,
+  tryit,
+  tryitAll,
+  tryitOrDefault,
+  tryitWithRetry,
 } from '@/utils/tryit';
 
 import { SatsNetClient } from '@/api/satsnet-client';

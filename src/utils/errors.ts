@@ -1,5 +1,5 @@
-import { SatsnetApiError } from '@/types';
 import { tryit } from 'radash';
+import { SatsnetApiError } from '@/types';
 
 /**
  * Enhanced error handler with radash tryit

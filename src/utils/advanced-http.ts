@@ -1,6 +1,6 @@
+import { Agent, type CacheStorage, type Dispatcher, Pool, request } from 'undici';
 import type { ApiConfig } from '@/types';
 import { SatsnetApiError } from '@/types';
-import { Agent, type CacheStorage, type Dispatcher, Pool, request } from 'undici';
 import { tryitWithRetry } from './tryit';
 
 /**

@@ -1,6 +1,6 @@
 {
   "name": "@btclib/satsnet-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "icehugh <ygz14835187@163.com>",
   "repository": {
     "type": "git",
@@ -19,34 +19,16 @@
     "undici",
     "http-client"
   ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "README.zh-CN.md",
-    "LICENSE"
-  ],
-  "readme": "README.md",
+  "description": "A high-performance satsnet protocol API library built with Bun, TypeScript, undici, and radash",
+  "license": "MIT",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "dependencies": {
-    "radash": "^12.0.0"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@types/bun": "^1.3.0",
-    "@types/node": "^20.10.0",
-    "bun-types": "latest",
-    "tsc-alias": "^1.8.16",
-    "terser": "^5.36.0",
-    "typescript": "^5.3.0",
-    "undici": "^7.16.0"
+  "types": "dist/index.d.ts",
+  "readme": "README.md",
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": ">=20.0.0"
   },
   "exports": {
     ".": {
@@ -58,31 +40,28 @@
       "types": "./dist/types.d.ts"
     }
   },
-  "bugs": {
-    "url": "https://github.com/icehugh/satsnet-api/issues"
-  },
-  "description": "A high-performance satsnet protocol API library built with Bun, TypeScript, undici, and radash",
-  "engines": {
-    "bun": ">=1.0.0",
-    "node": ">=20.0.0"
-  },
   "files": [
     "dist",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
-  "homepage": "https://github.com/icehugh/satsnet-api#readme",
-  "keywords": [
-    "satsnet",
-    "bitcoin",
-    "api",
-    "blockchain",
-    "ordinals",
-    "utxo",
-    "typescript",
-    "bun"
-  ],
-  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/icehugh/satsnet-api/issues"
+  },
+  "dependencies": {
+    "radash": "^12.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.0.6",
+    "@types/bun": "^1.3.0",
+    "@types/node": "^20.10.0",
+    "bun-types": "latest",
+    "tsc-alias": "^1.8.16",
+    "terser": "^5.36.0",
+    "typescript": "^5.3.0",
+    "undici": "^7.16.0"
+  },
   "peerDependenciesMeta": {
     "undici": {
       "optional": false
@@ -110,11 +89,9 @@
     "test:api-types": "bun run scripts/run-api-tests.ts",
     "type-check": "tsc --noEmit",
     "lint": "bunx @biomejs/biome check src/ tests/",
-    "lint:fix": "bunx @biomejs/biome check --apply src/ tests/",
+    "lint:fix": "bunx @biomejs/biome check --fix src/ tests/",
     "audit": "bun audit",
     "audit:fix": "bun audit --fix",
     "clean": "rm -rf dist"
-  },
-  "type": "module",
-  "types": "dist/index.d.ts"
+  }
 }

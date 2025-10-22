@@ -1,6 +1,6 @@
 import type { ApiConfig, Network } from '@/types';
-import { AdvancedHttpClient } from './advanced-http';
 import type { AdvancedHttpConfig } from './advanced-http';
+import { AdvancedHttpClient } from './advanced-http';
 
 /**
  * HTTP client using undici with advanced optimization
