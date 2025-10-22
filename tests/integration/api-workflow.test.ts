@@ -125,9 +125,9 @@ describe('SatsNet API Integration Tests', () => {
 
         // 2. 获取持有者信息
         const holders = await client.getTickerHolders(ticker, 0, 10);
-        expect(holders).toHaveProperty('holders');
+        expect(holders).toHaveProperty('detail');
         expect(holders).toHaveProperty('total');
-        expect(Array.isArray(holders.holders)).toBe(true);
+        expect(Array.isArray(holders.detail)).toBe(true);
         expect(typeof holders.total).toBe('number');
       },
       testConfig.timeout

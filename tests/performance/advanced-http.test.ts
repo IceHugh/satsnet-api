@@ -39,7 +39,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
 
         // 执行多个请求以测试连接复用
         const promises = Array.from({ length: iterations }, (_, _index) =>
-          httpClient.get('bestheight', {}, 'mainnet')
+          httpClient.get('bestheight', {})
         );
 
         const results = await Promise.allSettled(promises);
@@ -62,7 +62,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
         const startTime = Date.now();
 
         const promises = Array.from({ length: concurrentRequests }, () =>
-          httpClient.get('bestheight', {}, 'mainnet')
+          httpClient.get('bestheight', {})
         );
 
         const results = await Promise.allSettled(promises);
@@ -90,8 +90,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
         // 请求可能返回大量数据的端点
         const response = await httpClient.get(
           'v3/address/summary/bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-          {},
-          'mainnet'
+          {}
         );
         const requestTime = Date.now() - startTime;
 
@@ -121,12 +120,12 @@ describe('AdvancedHttpClient Performance Tests', () => {
 
         // 第一次请求
         const startTime1 = Date.now();
-        await httpClient.get(endpoint, {}, 'mainnet');
+        await httpClient.get(endpoint, {});
         const firstRequestTime = Date.now() - startTime1;
 
         // 第二次请求（应该从缓存获取）
         const startTime2 = Date.now();
-        await httpClient.get(endpoint, {}, 'mainnet');
+        await httpClient.get(endpoint, {});
         const secondRequestTime = Date.now() - startTime2;
 
         console.log(`First request: ${firstRequestTime}ms, Cached request: ${secondRequestTime}ms`);
@@ -155,12 +154,12 @@ describe('AdvancedHttpClient Performance Tests', () => {
         httpClient.clearCache();
 
         // 第一次请求
-        await httpClient.get(endpoint, {}, 'mainnet');
+        await httpClient.get(endpoint, {});
         const metricsAfterFirst = httpClient.getMetrics();
         const cacheMissesAfterFirst = metricsAfterFirst.cacheMisses;
 
         // 立即第二次请求（应该命中缓存）
-        await httpClient.get(endpoint, {}, 'mainnet');
+        await httpClient.get(endpoint, {});
         const metricsAfterSecond = httpClient.getMetrics();
         const cacheHitsAfterSecond = metricsAfterSecond.cacheHits;
 
@@ -180,7 +179,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
 
         // 执行多个请求
         const promises = Array.from({ length: iterations }, () =>
-          httpClient.get('bestheight', {}, 'mainnet')
+          httpClient.get('bestheight', {})
         );
 
         await Promise.all(promises);
@@ -222,7 +221,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
             retries: 2,
           });
 
-          await fastTimeoutClient.get('bestheight', {}, 'mainnet');
+          await fastTimeoutClient.get('bestheight', {});
           await fastTimeoutClient.close();
         } catch (_error) {
           // 预期会超时失败
@@ -305,7 +304,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
         );
 
         // 执行一些请求
-        const promises = clients.map((client) => client.get('bestheight', {}, 'mainnet'));
+        const promises = clients.map((client) => client.get('bestheight', {}));
 
         await Promise.all(promises);
 

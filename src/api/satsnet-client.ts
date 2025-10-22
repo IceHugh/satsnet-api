@@ -1,5 +1,6 @@
 import {
   type AddressSummary,
+  type AddressSummaryResponse,
   type ApiConfig,
   type AssetHolder,
   type BestHeightResponse,
@@ -216,7 +217,7 @@ export class SatsNetClient {
    * @param address - Bitcoin address
    * @returns Promise with address summary
    */
-  async getAddressSummary(address: string): Promise<AddressSummary> {
+  async getAddressSummary(address: string): Promise<AddressSummaryResponse> {
     return this.httpClient.get(`v3/address/summary/${address}`, {});
   }
 
