@@ -209,7 +209,35 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          echo "验证发布内容..."
+          echo "当前目录结构："
+          find . -type f -name "*.js" -o -name "*.d.ts" -o -name "*.json" | grep -E "(dist/|package\.json)" | sort
+
+          echo "dist目录验证："
+          if [ -d "dist" ]; then
+            echo "✅ dist目录存在"
+            echo "dist目录内容："
+            ls -la dist/
+            echo "dist目录大小："
+            du -sh dist/
+          else
+            echo "❌ dist目录不存在！"
+            exit 1
+          fi
+
+          echo "package.json验证："
+          if [ -f "package.json" ]; then
+            echo "✅ package.json存在"
+            echo "files字段："
+            cat package.json | jq '.files'
+          else
+            echo "❌ package.json不存在！"
+            exit 1
+          fi
+
+          echo "开始发布到NPM..."
           npm publish --access public
+          echo "NPM发布完成！"
 
       # - name: 创建 GitHub Release
   #   if: steps.check-npm.outputs.status != 200
