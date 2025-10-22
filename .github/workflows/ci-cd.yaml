@@ -1,0 +1,177 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: "22"
+  BUN_VERSION: "latest"
+
+jobs:
+  # 代码质量检查和测试
+  build:
+    name: 代码质量检查和测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: 获取依赖缓存
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 安装依赖
+        run: bun install
+
+      - name: 类型检查
+        run: bun run type-check
+
+      - name: 代码规范检查
+        run: bun run lint
+
+      - name: 运行测试
+        run: bun run test
+
+      - name: 构建项目
+        run: bun run build:prod
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        with:
+          name: build-artifacts
+          path: dist/
+          retention-days: 7
+
+  # 发布到 NPM（仅 main 分支）
+  publish:
+    name: 发布到 NPM
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: "https://registry.npmjs.org/"
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./
+
+      - name: 验证下载的构建产物
+        run: |
+          echo "检查下载的构建产物..."
+          find . -name "dist" -type d | while read dir; do
+            echo "找到 dist 目录: $dir"
+            ls -la "$dir" || echo "目录为空或不存在"
+          done
+
+      - name: 获取包信息
+        id: package-info
+        run: |
+          PACKAGE_VERSION=$(cat package.json | jq -r .version)
+          PACKAGE_NAME=$(cat package.json | jq -r .name)
+          echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+
+      - name: 检查 NPM 是否存在相同版本
+        id: check-npm
+        run: |
+          PACKAGE_NAME="${{ steps.package-info.outputs.name }}"
+          PACKAGE_VERSION="${{ steps.package-info.outputs.version }}"
+
+          # 使用 npm view 检查版本，更可靠的方法
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" >/dev/null 2>&1; then
+            echo "✅ 版本 $PACKAGE_VERSION 已存在"
+            echo "status=200" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️  版本 $PACKAGE_VERSION 不存在，可以发布"
+            echo "status=404" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 验证构建产物
+        run: |
+          echo "检查构建产物..."
+          ls -la ./dist/
+          echo "验证 package.json..."
+          cat package.json | jq '.name, .version'
+
+      - name: 发布到 NPM
+        if: steps.check-npm.outputs.status != 200
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --access public
+
+      # - name: 创建 GitHub Release
+  #   if: steps.check-npm.outputs.status != 200
+  #   uses: softprops/action-gh-release@v1
+  #   env:
+  #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #   with:
+  #     tag_name: ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}
+  #     name: ${{ steps.package-info.outputs.name }} v${{ steps.package-info.outputs.version }}
+  #     draft: false
+  #     prerelease: false
+  #     body: |
+  #       🚀 发布 ${{ steps.package-info.outputs.name }} 版本 ${{ steps.package-info.outputs.version }}
+  #
+  #       ## 变更内容
+  #       - 自动构建和发布
+  #
+  #       ## 安装
+  #       ```bash
+  #       npm install ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}
+  #       ```
+  #
+  #       ## 文档
+  #       - [README](https://github.com/${{ github.repository }}/tree/main/packages/${{ matrix.package }})
+  #       - [更新日志](https://github.com/${{ github.repository }}/releases)
+
+  # 通知
+  notify:
+    name: 构建通知
+    runs-on: ubuntu-latest
+    needs: [build, publish]
+    if: always()
+
+    steps:
+      - name: 构建成功通知
+        if: needs.build.result == 'success' && needs.publish.result == 'success'
+        run: |
+          echo "✅ CI/CD 流水线执行成功！"
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🚀 包已发布到 NPM"
+          else
+            echo "✅ 代码质量检查和测试通过"
+          fi
+
+      - name: 构建失败通知
+        if: needs.build.result == 'failure' || needs.publish.result == 'failure'
+        run: |
+          echo "❌ CI/CD 流水线执行失败！"
+          echo "请检查日志并修复问题"
+          exit 1

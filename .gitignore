@@ -94,7 +94,7 @@ junit.xml
 performance-reports/
 
 # AI/ML files
-.claude/plan/
+.claude/
 
 # Local development
 .local/
