@@ -30,10 +30,10 @@ A high-performance SatsNet protocol API library built with Bun, TypeScript, undi
 
 ```bash
 # Install main package
-bun add satsnet-api
+bun add @btclib/satsnet-api
 
 # or npm
-npm install satsnet-api
+npm install @btclib/satsnet-api
 ```
 
 **Note**: This library requires `undici` as a peer dependency for optimal performance.

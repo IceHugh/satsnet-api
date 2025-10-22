@@ -32,10 +32,10 @@
 
 ```bash
 # 安装主包
-bun add satsnet-api
+bun add @btclib/satsnet-api
 
 # 或者 npm
-npm install satsnet-api
+npm install @btclib/satsnet-api
 ```
 
 **注意**: 需要手动安装 undici（高性能HTTP客户端）

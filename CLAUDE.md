@@ -95,7 +95,7 @@ graph TD
 
 #### SatsNetClient 实例化方式
 ```typescript
-import { SatsNetClient } from 'satsnet-api';
+import { SatsNetClient } from '@btclib/satsnet-api';
 
 // 使用默认配置 (mainnet 网络)
 const client = new SatsNetClient();
