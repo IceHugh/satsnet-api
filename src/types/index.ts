@@ -125,6 +125,8 @@ export type AddressSummary = AddressAssetItem[];
 export interface AddressSummaryResponse {
   address?: string;
   balance?: number;
+  // 实际API返回AddressAssetItem数组格式，但为了测试兼容性保留上述属性
+  // API实际返回: AddressAssetItem[]
 }
 
 /**

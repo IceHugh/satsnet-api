@@ -41,11 +41,11 @@ export const realNames = {
 // API端点配置
 export const apiEndpoints = {
   mainnet: {
-    baseUrl: 'https://apiprd.ordx.market/btc/mainnet',
+    baseUrl: 'https://apiprd.ordx.market',
     network: 'mainnet' as const,
   },
   testnet: {
-    baseUrl: 'https://apiprd.ordx.market/btc/testnet',
+    baseUrl: 'https://apiprd.ordx.market',
     network: 'testnet' as const,
   },
 };

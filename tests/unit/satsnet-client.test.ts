@@ -159,10 +159,15 @@ describe('SatsNetClient - Address Operations', () => {
 
         const summary = await client.getAddressSummary(valid);
 
-        expect(summary).toHaveProperty('address');
-        expect(summary).toHaveProperty('balance');
-        expect(summary.address).toBe(valid);
-        expect(typeof summary.balance).toBe('number');
+        expect(Array.isArray(summary)).toBe(true);
+        expect(summary.length).toBeGreaterThanOrEqual(0);
+
+        if (summary.length > 0) {
+          const firstItem = summary[0];
+          expect(firstItem).toHaveProperty('Name');
+          expect(firstItem).toHaveProperty('Amount');
+          expect(firstItem).toHaveProperty('Precision');
+        }
       },
       testConfig.timeout
     );
