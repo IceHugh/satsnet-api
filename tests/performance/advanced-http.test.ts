@@ -178,9 +178,7 @@ describe('AdvancedHttpClient Performance Tests', () => {
         const startTime = Date.now();
 
         // 执行多个请求
-        const promises = Array.from({ length: iterations }, () =>
-          httpClient.get('bestheight', {})
-        );
+        const promises = Array.from({ length: iterations }, () => httpClient.get('bestheight', {}));
 
         await Promise.all(promises);
         const duration = Date.now() - startTime;

@@ -49,7 +49,7 @@
       "suspicious": {
         "noArrayIndexKey": "error",
         "noDebugger": "error",
-        "noConsole": { "level": "warn", "options": { "allow": ["log"] } }
+        "noConsole": { "level": "warn", "options": { "allow": ["log", "warn"] } }
       }
     }
   },

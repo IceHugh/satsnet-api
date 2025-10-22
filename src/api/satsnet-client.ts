@@ -1,5 +1,4 @@
 import {
-  type AddressSummary,
   type AddressSummaryResponse,
   type ApiConfig,
   type AssetHolder,

@@ -42,7 +42,6 @@ export const mockHealthCheck = {
   ordxdbver: '1.0.0',
 };
 
-
 // 错误生成器
 export const createMockError = (message: string, code = -1) => {
   return new SatsnetApiError(message, code, { originalError: message });
