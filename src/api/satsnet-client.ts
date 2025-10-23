@@ -60,7 +60,9 @@ export class SatsNetClient {
    * Create SatsNet client instance
    * @param config - API configuration
    */
-  constructor(config: Partial<ApiConfig> = {}) {
+  constructor(config: Partial<ApiConfig> & { isNextJS?: boolean } = {}) {
+    const { isNextJS, ...restConfig } = config;
+
     const defaultConfig: ApiConfig = {
       baseUrl: 'https://apiprd.ordx.market',
       network: 'mainnet',
@@ -69,8 +71,15 @@ export class SatsNetClient {
       retries: 3,
     };
 
-    this.config = { ...defaultConfig, ...config };
-    this.httpClient = new HttpClient(this.config);
+    this.config = { ...defaultConfig, ...restConfig };
+
+    // 将 isNextJS 配置传递给 HttpClient
+    const httpConfig = {
+      ...this.config,
+      isNextJS: isNextJS ?? false // 默认为 false
+    };
+
+    this.httpClient = new HttpClient(httpConfig);
   }
 
   /**

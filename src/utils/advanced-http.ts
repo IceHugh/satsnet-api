@@ -1,7 +1,12 @@
 import { Agent, type CacheStorage, type Dispatcher, Pool, request } from 'undici';
+import { createGunzip, createInflate } from 'zlib';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
 import type { ApiConfig } from '@/types';
 import { SatsnetApiError } from '@/types';
 import { tryitWithRetry } from './tryit';
+
+const streamPipeline = promisify(pipeline);
 
 /**
  * 性能监控指标
@@ -47,6 +52,9 @@ export interface AdvancedHttpConfig extends ApiConfig {
   retryCondition?: (error: unknown) => boolean;
   retryBackoff?: (attempt: number) => number;
 
+  // 环境配置
+  isNextJS?: boolean; // 是否在 Next.js 环境中运行
+
   // 请求拦截器
   requestInterceptor?: (request: Request) => Request | Promise<Request>;
   responseInterceptor?: (response: Response) => Response | Promise<Response>;
@@ -63,19 +71,15 @@ export class AdvancedHttpClient {
   private agent?: Agent;
 
   constructor(config: AdvancedHttpConfig) {
-    // 检测 Next.js 环境
-    const isNextJS =
-      typeof window === 'undefined' &&
-      (process.env.NEXT_RUNTIME || process.env.NODE_ENV === 'production' || process.env.VERCEL);
-
+    // 使用用户传入的配置，不自动检测环境
     this.config = {
       connections: 50,
       keepAlive: false, // 默认禁用以避免 undici 兼容性问题
       keepAliveTimeout: 60000,
-      http2: !isNextJS, // 在 Next.js 环境中禁用 HTTP/2 以提高兼容性
+      http2: config.http2 ?? false, // 默认禁用 HTTP/2 以提高兼容性
       maxConcurrentStreams: 100,
-      compression: true,
-      acceptEncoding: isNextJS ? ['gzip', 'deflate'] : ['gzip', 'deflate', 'br'], // Next.js 中禁用 brotli
+      compression: config.compression ?? true,
+      acceptEncoding: config.acceptEncoding ?? ['gzip', 'deflate'], // 默认不支持 brotli
       cache: true,
       cacheMaxAge: 300000, // 5 minutes
       metrics: true,
@@ -93,7 +97,7 @@ export class AdvancedHttpClient {
       },
       retryBackoff: (attempt) => Math.min(1000 * 2 ** attempt, 10000), // 指数退避，最大10秒
       ...config,
-    };
+    } as AdvancedHttpConfig;
 
     this.metrics = {
       requestCount: 0,
@@ -318,52 +322,58 @@ export class AdvancedHttpClient {
       headers['accept-encoding'] = this.config.acceptEncoding.join(', ');
     }
 
+    // 防止 Header 冲突 - 删除 content-encoding
+    delete headers['content-encoding'];
+
     return headers;
   }
 
   /**
-   * 安全解析 JSON 响应
+   * 安全解析 JSON 响应 - 支持手动解压 gzip
    */
   private async safeParseJson(response: {
-    body: {
-      text(): Promise<string>;
-      json(): Promise<unknown>;
-    };
+    body: any;
     headers?: Record<string, string | string[] | undefined>;
   }) {
     try {
-      // 首先尝试直接解析 JSON
-      return await response.body.json();
-    } catch (error) {
-      console.warn('JSON parse failed, attempting to parse as text:', error);
+      const encoding = response.headers?.['content-encoding'];
+      console.log(`[AdvancedHttpClient] Response encoding: ${encoding}`);
 
-      try {
-        // 如果 JSON 解析失败，获取原始文本
-        const text = await response.body.text();
+      // 如果响应被压缩，手动解压
+      if (encoding === 'gzip' || encoding === 'deflate') {
+        console.log(`[AdvancedHttpClient] Manually decompressing ${encoding} response`);
 
-        // 检查是否是 HTML 错误页面
-        if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
-          throw new SatsnetApiError(
-            'Server returned HTML instead of JSON - this may be an error page or proxy issue',
-            500,
-            { responsePreview: text.slice(0, 200) }
-          );
+        const chunks: Buffer[] = [];
+        const stream = encoding === 'gzip'
+          ? response.body.pipe(createGunzip())
+          : response.body.pipe(createInflate());
+
+        for await (const chunk of stream) {
+          chunks.push(chunk);
         }
 
-        // 尝试手动解析文本为 JSON
+        const text = Buffer.concat(chunks).toString('utf8');
+        console.log(`[AdvancedHttpClient] Decompressed text length: ${text.length}`);
+
         return JSON.parse(text);
-      } catch (textError) {
-        throw new SatsnetApiError(
-          `Invalid JSON response: ${textError instanceof Error ? textError.message : 'Unknown error'}`,
-          500,
-          {
-            originalError: error,
-            textError,
-            contentType: response.headers?.['content-type'],
-            contentLength: response.headers?.['content-length'],
-          }
-        );
       }
+
+      // 否则直接用 undici 的 body.json()
+      return await response.body.json();
+    } catch (error) {
+      console.warn('JSON parse failed:', error);
+
+      // 错误处理，包含详细信息
+      throw new SatsnetApiError(
+        `Invalid JSON response: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        500,
+        {
+          originalError: error,
+          contentType: response.headers?.['content-type'],
+          contentLength: response.headers?.['content-length'],
+          contentEncoding: response.headers?.['content-encoding'],
+        }
+      );
     }
   }
 
