@@ -64,7 +64,8 @@ export class AdvancedHttpClient {
 
   constructor(config: AdvancedHttpConfig) {
     // 检测 Next.js 环境
-    const isNextJS = typeof window === 'undefined' &&
+    const isNextJS =
+      typeof window === 'undefined' &&
       (process.env.NEXT_RUNTIME || process.env.NODE_ENV === 'production' || process.env.VERCEL);
 
     this.config = {
@@ -352,21 +353,14 @@ export class AdvancedHttpClient {
         // 尝试手动解析文本为 JSON
         return JSON.parse(text);
       } catch (textError) {
-        // 提供更详细的错误信息用于调试
-        console.error('Response parsing failed:', {
-          jsonError: error,
-          textError,
-          contentType: response.headers?.['content-type'],
-          contentLength: response.headers?.['content-length']
-        });
-
         throw new SatsnetApiError(
           `Invalid JSON response: ${textError instanceof Error ? textError.message : 'Unknown error'}`,
           500,
           {
             originalError: error,
             textError,
-            contentType: response.headers?.['content-type']
+            contentType: response.headers?.['content-type'],
+            contentLength: response.headers?.['content-length'],
           }
         );
       }
