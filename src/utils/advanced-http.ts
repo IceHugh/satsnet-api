@@ -1,7 +1,7 @@
 import { pipeline } from 'node:stream';
 import { promisify } from 'node:util';
 import { createGunzip, createInflate } from 'node:zlib';
-import { Agent, type CacheStorage, type Dispatcher, Pool, request } from 'undici';
+import { type CacheStorage, type Dispatcher, Pool, request } from 'undici';
 import type { ApiConfig } from '@/types';
 import { SatsnetApiError } from '@/types';
 import { tryitWithRetry } from './tryit';
@@ -30,10 +30,6 @@ export interface AdvancedHttpConfig extends ApiConfig {
   connections?: number;
   keepAlive?: true | false;
   keepAliveTimeout?: number;
-
-  // HTTP/2 配置
-  http2?: true | false;
-  maxConcurrentStreams?: number;
 
   // 压缩配置
   compression?: true | false;
@@ -68,7 +64,6 @@ export class AdvancedHttpClient {
   private dispatcher!: Dispatcher;
   private metrics: PerformanceMetrics;
   private cache = new Map<string, { data: unknown; timestamp: number }>();
-  private agent?: Agent;
 
   constructor(config: AdvancedHttpConfig) {
     // 使用用户传入的配置，不自动检测环境
@@ -76,8 +71,6 @@ export class AdvancedHttpClient {
       connections: 50,
       keepAlive: false, // 默认禁用以避免 undici 兼容性问题
       keepAliveTimeout: 60000,
-      http2: config.http2 ?? false, // 默认禁用 HTTP/2 以提高兼容性
-      maxConcurrentStreams: 100,
       compression: config.compression ?? true,
       acceptEncoding: config.acceptEncoding ?? ['gzip', 'deflate'], // 默认不支持 brotli
       cache: true,
@@ -114,41 +107,25 @@ export class AdvancedHttpClient {
   }
 
   private setupDispatcher(): void {
-    if (this.config.http2) {
-      // HTTP/2 Agent
-      const agentOptions: Record<string, unknown> = {
-        connections: this.config.connections,
-        keepAliveTimeout: this.config.keepAliveTimeout,
-        maxConcurrentStreams: this.config.maxConcurrentStreams,
-      };
+    // HTTP/1.1 连接池
+    const poolOptions: Record<string, unknown> = {
+      connections: this.config.connections,
+      keepAliveTimeout: this.config.keepAliveTimeout,
+      // 修复 keepAlive 错误：对于 HTTP/1.1，需要禁用 pipelining 或调整 keepAlive 配置
+      pipelining: 0, // 禁用 pipelining 以支持 keepAlive
+    };
 
-      if (this.config.keepAlive !== false) {
-        agentOptions.keepAlive = true;
-      }
-
-      this.agent = new Agent(agentOptions);
-      this.dispatcher = this.agent;
-    } else {
-      // HTTP/1.1 连接池
-      const poolOptions: Record<string, unknown> = {
-        connections: this.config.connections,
-        keepAliveTimeout: this.config.keepAliveTimeout,
-        // 修复 keepAlive 错误：对于 HTTP/1.1，需要禁用 pipelining 或调整 keepAlive 配置
-        pipelining: 0, // 禁用 pipelining 以支持 keepAlive
-      };
-
-      // 只在明确启用时才设置 keepAlive，并且确保兼容性
-      if (this.config.keepAlive === true) {
-        poolOptions.keepAlive = true;
-      }
-
-      // 使用基础 URL 创建连接池
-      const baseUrl = this.config.baseUrl.endsWith('/')
-        ? this.config.baseUrl.slice(0, -1)
-        : this.config.baseUrl;
-      const pool = new Pool(baseUrl, poolOptions);
-      this.dispatcher = pool;
+    // 只在明确启用时才设置 keepAlive，并且确保兼容性
+    if (this.config.keepAlive === true) {
+      poolOptions.keepAlive = true;
     }
+
+    // 使用基础 URL 创建连接池
+    const baseUrl = this.config.baseUrl.endsWith('/')
+      ? this.config.baseUrl.slice(0, -1)
+      : this.config.baseUrl;
+    const pool = new Pool(baseUrl, poolOptions);
+    this.dispatcher = pool;
   }
 
   /**
@@ -617,10 +594,8 @@ export class AdvancedHttpClient {
    * 关闭连接池
    */
   async close(): Promise<void> {
-    if (this.agent && typeof this.agent.destroy === 'function') {
-      await this.agent.destroy();
-    } else if (this.agent && typeof this.agent.close === 'function') {
-      await this.agent.close();
+    if (this.dispatcher && typeof this.dispatcher.close === 'function') {
+      await this.dispatcher.close();
     }
     this.cache.clear();
   }
@@ -632,7 +607,7 @@ export class AdvancedHttpClient {
     this.config = { ...this.config, ...newConfig };
 
     // 如果关键配置改变，重新设置 dispatcher
-    if (newConfig.connections || newConfig.http2 || newConfig.keepAlive) {
+    if (newConfig.connections || newConfig.keepAlive) {
       await this.close();
       this.setupDispatcher();
     }

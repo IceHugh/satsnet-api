@@ -287,17 +287,18 @@ describe('SatsNet Performance Tests', () => {
     );
   });
 
-  describe('HTTP/2 Performance', () => {
+  describe('HTTP/1.1 Performance', () => {
     it(
-      'should leverage HTTP/2 multiplexing',
+      'should leverage HTTP/1.1 connection pooling',
       async () => {
-        // 创建支持HTTP/2的客户端
-        const http2Client = new SatsNetClient({
+        // 创建HTTP/1.1优化的客户端
+        const httpClient = new SatsNetClient({
           baseUrl: apiEndpoints.mainnet.baseUrl,
           network: apiEndpoints.mainnet.network,
           timeout: 30000,
-          http2: true,
-          maxConcurrentStreams: 100,
+          http2: false,
+          connections: 50,
+          keepAlive: true,
         });
 
         const { valid } = realAddresses.mainnet;
@@ -305,19 +306,19 @@ describe('SatsNet Performance Tests', () => {
         const startTime = Date.now();
 
         // 大量并发请求
-        const promises = Array.from({ length: concurrentCount }, () => http2Client.getUtxos(valid));
+        const promises = Array.from({ length: concurrentCount }, () => httpClient.getUtxos(valid));
 
         const results = await Promise.allSettled(promises);
         const duration = Date.now() - startTime;
 
         // 清理
-        await http2Client.close();
+        await httpClient.close();
 
         const successCount = results.filter((r) => r.status === 'fulfilled').length;
         expect(successCount).toBe(concurrentCount);
-        expect(duration).toBeLessThan(12000); // HTTP/2应该更快
+        expect(duration).toBeLessThan(15000); // HTTP/1.1 with connection pooling
 
-        console.log(`HTTP/2: ${concurrentCount} concurrent requests in ${duration}ms`);
+        console.log(`HTTP/1.1: ${concurrentCount} concurrent requests in ${duration}ms`);
       },
       performanceConfig.timeout
     );
