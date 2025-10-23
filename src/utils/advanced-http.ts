@@ -48,9 +48,6 @@ export interface AdvancedHttpConfig extends ApiConfig {
   retryCondition?: (error: unknown) => boolean;
   retryBackoff?: (attempt: number) => number;
 
-  // 环境配置
-  isNextJS?: boolean; // 是否在 Next.js 环境中运行
-
   // 请求拦截器
   requestInterceptor?: (request: Request) => Request | Promise<Request>;
   responseInterceptor?: (response: Response) => Response | Promise<Response>;
@@ -71,8 +68,8 @@ export class AdvancedHttpClient {
       connections: 50,
       keepAlive: false, // 默认禁用以避免 undici 兼容性问题
       keepAliveTimeout: 60000,
-      compression: config.compression ?? true,
-      acceptEncoding: config.acceptEncoding ?? ['gzip', 'deflate'], // 默认不支持 brotli
+      compression: config.compression ?? false, // 默认禁用压缩，用户可手动启用
+      acceptEncoding: config.acceptEncoding ?? [],
       cache: true,
       cacheMaxAge: 300000, // 5 minutes
       metrics: true,
@@ -323,7 +320,7 @@ export class AdvancedHttpClient {
       }
 
       // 原生解析失败，尝试手动解压
-      if (!this.config.isNextJS && encoding && this.shouldTryManualDecompression(encoding)) {
+      if (encoding && this.shouldTryManualDecompression(encoding)) {
         const manualResult = await this.tryManualDecompression(response, encoding);
         if (manualResult.success) {
           return manualResult.data;
@@ -374,6 +371,33 @@ export class AdvancedHttpClient {
   private shouldTryManualDecompression(encoding?: string | string[]): boolean {
     const encodingValue = Array.isArray(encoding) ? encoding[0] : encoding;
     return encodingValue === 'gzip' || encodingValue === 'deflate';
+  }
+
+  /**
+   * 检测响应编码并返回处理策略
+   */
+  private detectEncodingStrategy(encoding?: string | string[]): {
+    useNative: boolean;
+    tryManual: boolean;
+    encodingValue?: string;
+  } {
+    const encodingValue = Array.isArray(encoding) ? encoding[0] : encoding;
+
+    // 对于压缩编码，优先尝试原生解析，失败后手动解压
+    if (encodingValue && (encodingValue === 'gzip' || encodingValue === 'deflate')) {
+      return {
+        useNative: true,
+        tryManual: true,
+        encodingValue,
+      };
+    }
+
+    // 无压缩或未知编码，仅使用原生解析
+    return {
+      useNative: true,
+      tryManual: false,
+      encodingValue: undefined,
+    };
   }
 
   /**

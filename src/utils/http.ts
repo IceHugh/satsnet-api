@@ -21,8 +21,8 @@ export class HttpClient {
       connections: 50,
       keepAlive: false, // 默认禁用 keepAlive 以避免兼容性问题
       keepAliveTimeout: 60000,
-      compression: true,
-      acceptEncoding: ['gzip', 'deflate', 'br'],
+      compression: false, // 默认禁用压缩以避免 Brotli 解压问题
+      acceptEncoding: [], // 禁用压缩编码
       cache: true,
       cacheMaxAge: 300000,
       metrics: true,

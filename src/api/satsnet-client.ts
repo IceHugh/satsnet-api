@@ -60,23 +60,23 @@ export class SatsNetClient {
    * Create SatsNet client instance
    * @param config - API configuration
    */
-  constructor(config: Partial<ApiConfig> & { isNextJS?: boolean } = {}) {
-    const { isNextJS, ...restConfig } = config;
-
+  constructor(config: Partial<ApiConfig> = {}) {
     const defaultConfig: ApiConfig = {
       baseUrl: 'https://apiprd.ordx.market',
       network: 'mainnet',
       chain: 'btc',
       timeout: 10000,
       retries: 3,
+      // 默认禁用压缩以避免 Brotli 解压问题，用户可以手动启用
+      compression: false,
+      acceptEncoding: [],
     };
 
-    this.config = { ...defaultConfig, ...restConfig };
+    this.config = { ...defaultConfig, ...config };
 
-    // 将 isNextJS 配置传递给 HttpClient
+    // 将配置传递给 HttpClient
     const httpConfig = {
       ...this.config,
-      isNextJS: isNextJS ?? false, // 默认为 false
     };
 
     this.httpClient = new HttpClient(httpConfig);

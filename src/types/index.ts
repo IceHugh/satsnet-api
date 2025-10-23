@@ -308,6 +308,9 @@ export interface ApiConfig {
   headers?: Record<string, string>;
   connections?: number;
   keepAlive?: boolean;
+  // 压缩配置 - 由用户自主选择
+  compression?: boolean;
+  acceptEncoding?: string[];
 }
 
 /**
