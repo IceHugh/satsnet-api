@@ -9,6 +9,14 @@ import { tryitWithRetry } from './tryit';
 const _streamPipeline = promisify(pipeline);
 
 /**
+ * HTTP 响应体接口 - 兼容 undici 和 Node.js 流
+ */
+interface HttpResponseBody {
+  json(): Promise<unknown>;
+  pipe<T extends NodeJS.WritableStream>(destination: T): T;
+}
+
+/**
  * 性能监控指标
  */
 export interface PerformanceMetrics {
@@ -306,7 +314,7 @@ export class AdvancedHttpClient {
    * 安全解析 JSON 响应 - 优先使用 undici 原生解析
    */
   private async safeParseJson(response: {
-    body: any;
+    body: HttpResponseBody;
     headers?: Record<string, string | string[] | undefined>;
   }) {
     try {
@@ -359,8 +367,8 @@ export class AdvancedHttpClient {
    * 尝试使用 undici 原生 JSON 解析
    */
   private async tryNativeJsonParse(response: {
-    body: any;
-  }): Promise<{ success: true; data: any } | { success: false; error: Error }> {
+    body: HttpResponseBody;
+  }): Promise<{ success: true; data: unknown } | { success: false; error: Error }> {
     try {
       console.log('[AdvancedHttpClient] Using undici native JSON parsing');
       const data = await response.body.json();
@@ -382,13 +390,12 @@ export class AdvancedHttpClient {
     return encodingValue === 'gzip' || encodingValue === 'deflate';
   }
 
-  
   /**
    * 尝试基于缓冲区的解析（用于 Next.js 环境）
    */
   private async tryBufferBasedParsing(response: {
-    body: any;
-  }): Promise<{ success: true; data: any } | { success: false; error: Error }> {
+    body: HttpResponseBody;
+  }): Promise<{ success: true; data: unknown } | { success: false; error: Error }> {
     try {
       console.log('[AdvancedHttpClient] Trying buffer-based parsing for Next.js');
 
@@ -413,40 +420,46 @@ export class AdvancedHttpClient {
   /**
    * 将响应体转换为 Buffer
    */
-  private async responseToBuffer(body: any): Promise<Buffer> {
-    if (body instanceof Buffer) {
-      return body;
+  private async responseToBuffer(body: HttpResponseBody): Promise<Buffer> {
+    // 尝试使用 undici 的 body.arrayBuffer() 方法（如果存在）
+    try {
+      const bodyWithArrayBuffer = body as unknown as { arrayBuffer(): Promise<ArrayBuffer> };
+      if (typeof bodyWithArrayBuffer.arrayBuffer === 'function') {
+        const arrayBuffer = await bodyWithArrayBuffer.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      }
+    } catch {
+      // 如果 arrayBuffer 方法不存在或失败，继续其他方法
     }
 
-    if (body instanceof Uint8Array) {
-      return Buffer.from(body);
-    }
-
-    // 如果是流，需要收集数据
-    if (body && typeof body === 'object' && body.readable) {
-      const chunks: Buffer[] = [];
-
-      return new Promise((resolve, reject) => {
-        body.on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-
-        body.on('end', () => {
-          resolve(Buffer.concat(chunks));
-        });
-
-        body.on('error', (error: Error) => {
-          reject(error);
-        });
-      });
-    }
-
-    // 尝试作为字符串处理
+    // 如果 body 是字符串
     if (typeof body === 'string') {
       return Buffer.from(body, 'utf8');
     }
 
-    throw new Error('Unable to convert response body to buffer');
+    // 尝试将 body 转换为流并收集数据
+    try {
+      const chunks: Buffer[] = [];
+      const stream = body as unknown as NodeJS.ReadableStream;
+
+      return new Promise((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+
+        stream.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+
+        stream.on('error', (error: Error) => {
+          reject(error);
+        });
+      });
+    } catch {
+      // 如果流转换失败，尝试最后的回退方法
+    }
+
+    throw new Error('Unable to convert response body to buffer: unsupported body type');
   }
 
   /**
@@ -480,10 +493,10 @@ export class AdvancedHttpClient {
    */
   private async tryManualDecompression(
     response: {
-      body: any;
+      body: HttpResponseBody;
     },
     encoding: string | string[]
-  ): Promise<{ success: true; data: any } | { success: false; error: Error }> {
+  ): Promise<{ success: true; data: unknown } | { success: false; error: Error }> {
     try {
       const encodingValue = Array.isArray(encoding) ? encoding[0] : encoding;
       console.log(`[AdvancedHttpClient] Attempting manual decompression for ${encodingValue}`);
