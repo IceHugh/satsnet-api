@@ -396,7 +396,6 @@ export class AdvancedHttpClient {
     return {
       useNative: true,
       tryManual: false,
-      encodingValue: undefined,
     };
   }
 
