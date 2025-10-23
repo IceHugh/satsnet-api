@@ -1,12 +1,12 @@
+import { pipeline } from 'node:stream';
+import { promisify } from 'node:util';
+import { createGunzip, createInflate } from 'node:zlib';
 import { Agent, type CacheStorage, type Dispatcher, Pool, request } from 'undici';
-import { createGunzip, createInflate } from 'zlib';
-import { pipeline } from 'stream';
-import { promisify } from 'util';
 import type { ApiConfig } from '@/types';
 import { SatsnetApiError } from '@/types';
 import { tryitWithRetry } from './tryit';
 
-const streamPipeline = promisify(pipeline);
+const _streamPipeline = promisify(pipeline);
 
 /**
  * 性能监控指标
@@ -339,14 +339,21 @@ export class AdvancedHttpClient {
       const encoding = response.headers?.['content-encoding'];
       console.log(`[AdvancedHttpClient] Response encoding: ${encoding}`);
 
-      // 如果响应被压缩，手动解压
+      // Next.js 环境简化处理，不使用 stream
+      if (this.config.isNextJS) {
+        console.log('[AdvancedHttpClient] Next.js detected, using simplified JSON parsing');
+        return await response.body.json();
+      }
+
+      // 其他环境支持手动解压
       if (encoding === 'gzip' || encoding === 'deflate') {
         console.log(`[AdvancedHttpClient] Manually decompressing ${encoding} response`);
 
         const chunks: Buffer[] = [];
-        const stream = encoding === 'gzip'
-          ? response.body.pipe(createGunzip())
-          : response.body.pipe(createInflate());
+        const stream =
+          encoding === 'gzip'
+            ? response.body.pipe(createGunzip())
+            : response.body.pipe(createInflate());
 
         for await (const chunk of stream) {
           chunks.push(chunk);

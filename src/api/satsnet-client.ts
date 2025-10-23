@@ -76,7 +76,7 @@ export class SatsNetClient {
     // 将 isNextJS 配置传递给 HttpClient
     const httpConfig = {
       ...this.config,
-      isNextJS: isNextJS ?? false // 默认为 false
+      isNextJS: isNextJS ?? false, // 默认为 false
     };
 
     this.httpClient = new HttpClient(httpConfig);
