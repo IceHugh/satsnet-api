@@ -1,4 +1,4 @@
-import { SatsNetClient } from './src/api/satsnet-client.ts';
+import { SatsNetClient } from './src/api/satsnet-client';
 
 // 测试 getNames 功能
 async function testGetNames() {
@@ -41,22 +41,34 @@ async function testGetNames() {
         console.log(`- 总数量: ${nameList.total}`);
       }
 
-      if (nameList.limit !== undefined) {
-        console.log(`- 限制数量: ${nameList.limit}`);
-      }
+      // 移除 limit 属性检查，因为 NameServiceListResponse 接口中没有这个属性
+      // if (nameList.limit !== undefined) {
+      //   console.log(`- 限制数量: ${nameList.limit}`);
+      // }
     }
 
   } catch (error) {
     console.error('❌ 测试失败:');
-    console.error('错误类型:', error.constructor.name);
-    console.error('错误信息:', error.message);
 
-    if (error.code) {
-      console.error('错误代码:', error.code);
-    }
+    if (error instanceof Error) {
+      console.error('错误类型:', error.constructor.name);
+      console.error('错误信息:', error.message);
 
-    if (error.statusCode) {
-      console.error('HTTP状态码:', error.statusCode);
+      // 检查是否是我们自定义的 SatsnetApiError
+      const apiError = error as any;
+      if (apiError.code) {
+        console.error('错误代码:', apiError.code);
+      }
+
+      if (apiError.statusCode) {
+        console.error('HTTP状态码:', apiError.statusCode);
+      }
+
+      if (apiError.details) {
+        console.error('错误详情:', JSON.stringify(apiError.details, null, 2));
+      }
+    } else {
+      console.error('未知错误:', String(error));
     }
   }
 
