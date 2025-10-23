@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![SatsNet API](https://img.shields.io/badge/SatsNet%20API-1.0.0-blue)
+![SatsNet API](https://img.shields.io/badge/SatsNet%20API-1.1.2-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)
 ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)

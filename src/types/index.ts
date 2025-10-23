@@ -311,6 +311,8 @@ export interface ApiConfig {
   // 压缩配置 - 由用户自主选择
   compression?: boolean;
   acceptEncoding?: string[];
+  // Next.js 环境配置
+  isNextJS?: boolean;
 }
 
 /**

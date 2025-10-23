@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![SatsNet API](https://img.shields.io/badge/SatsNet%20API-1.0.0-blue)
+![SatsNet API](https://img.shields.io/badge/SatsNet%20API-1.1.2-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)
 ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)
@@ -52,6 +52,14 @@ const client = new SatsNetClient({
   network: 'testnet',
   timeout: 15000,
   retries: 5
+});
+
+// For Next.js environments - enable compatibility mode
+const nextjsClient = new SatsNetClient({
+  network: 'mainnet',
+  timeout: 15000,
+  isNextJS: true,  // Required for Next.js compatibility
+  compression: false
 });
 ```
 
@@ -149,8 +157,39 @@ interface ApiConfig {
   connections?: number;  // Connection pool size (default: 50)
   keepAlive?: boolean;   // Enable HTTP keep-alive (default: false)
   cache?: boolean;       // Enable caching (default: true)
+  compression?: boolean; // Enable compression (default: false)
+  isNextJS?: boolean;    // Enable Next.js compatibility mode (default: false)
 }
 ```
+
+### Next.js Compatibility
+
+For Next.js environments, enable compatibility mode to avoid JSON parsing issues:
+
+```typescript
+import { SatsNetClient } from '@btclib/satsnet-api';
+
+// Required for Next.js applications
+const nextjsClient = new SatsNetClient({
+  network: 'mainnet',
+  timeout: 15000,
+  isNextJS: true,      // Enable Next.js compatibility mode
+  compression: false,  // Recommended for Next.js
+  keepAlive: true      // Optimized for Next.js
+});
+
+// Works in API routes, server components, and client components
+export default async function handler(req, res) {
+  try {
+    const utxos = await nextjsClient.getUtxos(req.query.address);
+    res.status(200).json(utxos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+```
+
+**⚠️ Important**: Always set `isNextJS: true` when using this library in Next.js environments.
 
 ### Advanced HTTP Client
 
@@ -370,7 +409,7 @@ const livenetClient = new SatsNetClient({ network: 'livenet' });
 
 ## 📈 Bundle Size
 
-- **Main Package**: ~22.2 kB (uncompressed)
+- **Main Package**: ~28.13 kB (uncompressed)
 - **With Dependencies**: ~98.4 kB (includes undici)
 - **Tree Shakable**: Supports optimal tree shaking
 
@@ -391,6 +430,7 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 - 📚 [API Documentation](./docs/api/README.md)
 - 🚀 [Getting Started Guide](./docs/guide/getting-started.md)
 - 🔧 [Advanced Usage](./docs/guide/advanced-usage.md)
+- ⚛️ [Next.js Usage Guide](./docs/nextjs-usage.md)
 - 🐛 [Contributing Guide](./CONTRIBUTING.md)
 - 🔒 [Security Policy](./SECURITY.md)
 

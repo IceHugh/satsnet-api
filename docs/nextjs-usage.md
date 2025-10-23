@@ -2,30 +2,49 @@
 
 ## 问题说明
 
-在 Next.js 环境中使用 SatsNet API 时可能会遇到 JSON 解析错误：
-```
-Unexpected undici error: Unexpected token '�ߔ�."... is not valid JSON
-```
+在 Next.js 环境中使用 SatsNet API 时可能会遇到 JSON 解析错误，特别是当响应编码为 `undefined` 时。为了解决这个问题，需要在配置中明确指定 `isNextJS: true` 来启用 Next.js 兼容模式。
 
 ## 解决方案
 
-### 1. 自动环境检测
+### 1. 启用 Next.js 兼容模式
 
-库已内置 Next.js 环境检测，会自动应用兼容性配置：
-- 自动禁用 HTTP/2
-- 使用更保守的压缩算法
-- 优化连接池配置
-
-### 2. 基本使用
+在创建 SatsNet 客户端时，设置 `isNextJS: true` 来启用 Next.js 兼容配置：
 
 ```typescript
 import { SatsNetClient } from '@btclib/satsnet-api';
 
-// 创建客户端实例（自动检测 Next.js 环境）
+// Next.js 环境专用配置
+const nextjsClient = new SatsNetClient({
+  network: 'mainnet',
+  timeout: 15000,
+  retries: 3,
+  keepAlive: true,           // 启用 keep-alive 提高性能
+  compression: false,        // 禁用压缩确保兼容性
+  isNextJS: true,            // 启用 Next.js 兼容模式
+  baseUrl: 'https://apiprd.ordx.market',
+});
+```
+
+### 2. Next.js 兼容模式特性
+
+当启用 `isNextJS: true` 时，库会应用以下优化：
+
+- **缓冲区优先解析**: 在 Next.js 环境中，当响应编码为 `undefined` 时，优先使用缓冲区解析 JSON
+- **增强错误处理**: 提供更详细的错误信息和调试日志
+- **兼容性优化**: 确保 Next.js 服务端、客户端和 Edge Runtime 的兼容性
+- **性能优化**: 基于 HTTP/1.1 和 keep-alive 的优化配置
+
+### 3. 基本使用
+
+```typescript
+import { SatsNetClient } from '@btclib/satsnet-api';
+
+// 创建客户端实例（启用 Next.js 兼容模式）
 const client = new SatsNetClient({
   baseUrl: 'https://apiprd.ordx.market',
   network: 'mainnet',
-  timeout: 15000
+  timeout: 15000,
+  isNextJS: true  // 在 Next.js 环境中必须明确启用
 });
 
 // 在 Next.js API Route 中使用
@@ -43,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 ```
 
-### 3. 客户端组件中使用
+### 4. 客户端组件中使用
 
 ```typescript
 'use client';
@@ -59,7 +78,8 @@ export default function UtxoComponent({ address }: { address: string }) {
   useEffect(() => {
     const client = new SatsNetClient({
       baseUrl: 'https://apiprd.ordx.market',
-      network: 'mainnet'
+      network: 'mainnet',
+      isNextJS: true  // 客户端组件中也需要启用
     });
 
     const fetchUtxos = async () => {
@@ -88,7 +108,7 @@ export default function UtxoComponent({ address }: { address: string }) {
 }
 ```
 
-### 4. 服务器端组件中使用
+### 5. 服务器端组件中使用
 
 ```typescript
 import { SatsNetClient } from '@btclib/satsnet-api';
@@ -97,7 +117,8 @@ import { SatsNetClient } from '@btclib/satsnet-api';
 export default async function ServerComponent({ address }: { address: string }) {
   const client = new SatsNetClient({
     baseUrl: 'https://apiprd.ordx.market',
-    network: 'mainnet'
+    network: 'mainnet',
+    isNextJS: true  // 服务器端组件中也需要启用
   });
 
   try {
@@ -205,12 +226,95 @@ try {
 }
 ```
 
+## 调试和故障排除
+
+### 1. 启用调试日志
+
+库内置了详细的调试日志，帮助诊断问题：
+
+```typescript
+// 在开发环境中启用详细日志
+if (process.env.NODE_ENV === 'development') {
+  console.log('[SatsNet API] Next.js environment detected');
+}
+```
+
+您可能会看到以下日志信息：
+- `[AdvancedHttpClient] Response encoding: undefined` - 响应编码状态
+- `[AdvancedHttpClient] Next.js mode enabled, using buffer-based parsing` - Next.js 模式已启用
+- `[AdvancedHttpClient] Buffer-based parsing successful` - 缓冲区解析成功
+
+### 2. 常见问题解决
+
+#### 问题：JSON 解析失败
+```typescript
+// 确保使用正确的配置
+const client = new SatsNetClient({
+  network: 'mainnet',
+  compression: false,  // 在 Next.js 中禁用压缩
+  keepAlive: true,     // 使用 keep-alive
+  isNextJS: true,      // 必须明确启用 Next.js 兼容模式
+});
+
+// 使用 try-catch 捕获详细错误
+try {
+  const result = await client.getUtxos(address);
+  console.log('Success:', result);
+} catch (error) {
+  if (error instanceof SatsnetApiError) {
+    console.error('SatsNet API Error:', {
+      message: error.message,
+      code: error.code,
+      details: error.details
+    });
+  }
+}
+```
+
+#### 问题：性能优化
+```typescript
+// 使用客户端实例复用
+let clientInstance: SatsNetClient | null = null;
+
+function getClient() {
+  if (!clientInstance) {
+    clientInstance = new SatsNetClient({
+      network: 'mainnet',
+      timeout: 15000,
+      retries: 3,
+      keepAlive: true,
+      compression: false,
+      isNextJS: true,  // 在 Next.js 中必须启用
+    });
+  }
+  return clientInstance;
+}
+
+// 在 API 路由中使用
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const client = getClient();
+  // ... 使用 client
+}
+```
+
 ## 注意事项
 
-1. **环境检测**: 库会自动检测 Next.js 环境并应用兼容性配置
-2. **压缩处理**: 在 Next.js 中使用更保守的压缩算法以提高兼容性
-3. **错误日志**: 增强的错误日志帮助调试 JSON 解析问题
-4. **性能**: 虽然禁用了某些高级特性，但仍保持良好的性能表现
+1. **明确配置**: 在 Next.js 环境中必须明确设置 `isNextJS: true` 来启用兼容模式
+2. **缓冲区解析**: 当启用 Next.js 模式时，使用缓冲区优先解析 JSON，避免编码问题
+3. **压缩配置**: 建议在 Next.js 中禁用压缩以确保最大兼容性
+4. **错误日志**: 增强的错误日志帮助调试 JSON 解析问题
+5. **性能**: 基于 HTTP/1.1 优化，仍保持良好的性能表现
+6. **客户端复用**: 建议复用客户端实例以提高性能
+
+## 重要提醒
+
+**⚠️ 必须设置 `isNextJS: true`**
+
+与之前的自动检测不同，现在需要在 Next.js 环境中**明确指定** `isNextJS: true` 配置项。如果遇到 JSON 解析错误，请确认：
+
+1. 所有 `SatsNetClient` 实例都设置了 `isNextJS: true`
+2. API 路由、服务器组件、客户端组件都需要设置此配置
+3. 复用的客户端实例也需要启用此选项
 
 ## 故障排除
 

@@ -6,26 +6,26 @@
 
 ```bash
 # 使用 bun (推荐)
-bun add satsnet-api undici@^6.19.2
+bun add @btclib/satsnet-api undici@^7.16.0
 
 # 使用 npm
-npm install satsnet-api undici@^6.19.2
+npm install @btclib/satsnet-api undici@^7.16.0
 
 # 使用 yarn
-yarn add satsnet-api undici@^6.19.2
+yarn add @btclib/satsnet-api undici@^7.16.0
 ```
 
 ### 依赖要求
 
 - **Node.js**: >= 20.0.0 或 Bun >= 1.0.0
-- **undici**: ^6.19.2 (高性能HTTP客户端)
+- **undici**: ^7.16.0 (高性能HTTP客户端)
 - **运行环境**: 支持 ESM 格式
 
 ### 为什么需要手动安装 undici？
 
 使用 `peerDependencies` 设计有以下优势：
 
-1. **更小的包体积**: 构建包仅 17.96KB（vs 730MB）
+1. **更小的包体积**: 构建包仅 28.13KB（vs 730MB）
 2. **避免版本冲突**: 用户可以选择适合的 undici 版本
 3. **更好的性能**: 使用本地安装的 undici，减少依赖层级
 4. **灵活的依赖管理**: 支持项目自定义 HTTP 客户端配置
@@ -35,17 +35,18 @@ yarn add satsnet-api undici@^6.19.2
 ### 基本使用
 
 ```typescript
-import { satsnet } from 'satsnet-api';
+import { SatsNetClient } from '@btclib/satsnet-api';
 
 async function firstExample() {
+  const client = new SatsNetClient();
   try {
     // 获取 Bitcoin Core 捐赠地址的 UTXO
-    const utxos = await satsnet.getUtxos('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'); // Bitcoin Core 捐赠地址
+    const utxos = await client.getUtxos('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'); // Bitcoin Core 捐赠地址
 
     console.log('找到 UTXO 数量:', utxos.plainutxos.length);
     console.log('总金额:', utxos.total);
 
-    
+
   } catch (error) {
     console.error('请求失败:', error.message);
   }
@@ -66,9 +67,9 @@ const client = new SatsNetClient({
   timeout: 15000,                          // 15秒超时
   retries: 5,                              // 重试5次
   connections: 100,                        // 连接池大小
-  http2: true,                             // 启用 HTTP/2
+  keepAlive: true,                         // 启用 HTTP keep-alive
   cache: true,                             // 启用缓存
-  compression: true                        // 启用压缩
+  compression: false                       // 默认禁用压缩以确保兼容性
 });
 
 async function customClientExample() {
@@ -133,7 +134,7 @@ async function batchExample() {
 ### 1. 查询地址余额
 
 ```typescript
-import { satsnet } from 'satsnet-api';
+import { SatsNetClient } from '@btclib/satsnet-api';
 
 async function getAddressBalance(address: string) {
   try {

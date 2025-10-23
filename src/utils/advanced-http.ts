@@ -313,6 +313,15 @@ export class AdvancedHttpClient {
       const encoding = response.headers?.['content-encoding'];
       console.log(`[AdvancedHttpClient] Response encoding: ${encoding}`);
 
+      // 在 Next.js 环境中，如果编码为 undefined，先尝试缓冲区解析
+      if (this.config.isNextJS && !encoding) {
+        console.log('[AdvancedHttpClient] Next.js mode enabled, using buffer-based parsing');
+        const bufferResult = await this.tryBufferBasedParsing(response);
+        if (bufferResult.success) {
+          return bufferResult.data;
+        }
+      }
+
       // 优先使用原生解析
       const result = await this.tryNativeJsonParse(response);
       if (result.success) {
@@ -371,6 +380,73 @@ export class AdvancedHttpClient {
   private shouldTryManualDecompression(encoding?: string | string[]): boolean {
     const encodingValue = Array.isArray(encoding) ? encoding[0] : encoding;
     return encodingValue === 'gzip' || encodingValue === 'deflate';
+  }
+
+  
+  /**
+   * 尝试基于缓冲区的解析（用于 Next.js 环境）
+   */
+  private async tryBufferBasedParsing(response: {
+    body: any;
+  }): Promise<{ success: true; data: any } | { success: false; error: Error }> {
+    try {
+      console.log('[AdvancedHttpClient] Trying buffer-based parsing for Next.js');
+
+      // 将响应体转换为缓冲区
+      const buffer = await this.responseToBuffer(response.body);
+      const text = buffer.toString('utf8');
+
+      // 尝试解析 JSON
+      const data = JSON.parse(text);
+      console.log('[AdvancedHttpClient] Buffer-based parsing successful');
+
+      return { success: true, data };
+    } catch (error) {
+      console.warn('[AdvancedHttpClient] Buffer-based parsing failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error('Buffer-based parsing failed'),
+      };
+    }
+  }
+
+  /**
+   * 将响应体转换为 Buffer
+   */
+  private async responseToBuffer(body: any): Promise<Buffer> {
+    if (body instanceof Buffer) {
+      return body;
+    }
+
+    if (body instanceof Uint8Array) {
+      return Buffer.from(body);
+    }
+
+    // 如果是流，需要收集数据
+    if (body && typeof body === 'object' && body.readable) {
+      const chunks: Buffer[] = [];
+
+      return new Promise((resolve, reject) => {
+        body.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+
+        body.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+
+        body.on('error', (error: Error) => {
+          reject(error);
+        });
+      });
+    }
+
+    // 尝试作为字符串处理
+    if (typeof body === 'string') {
+      return Buffer.from(body, 'utf8');
+    }
+
+    throw new Error('Unable to convert response body to buffer');
   }
 
   /**
