@@ -12,6 +12,28 @@
 - WebSocket 支持
 - 更多网络支持
 
+## [1.0.6] - 2025-10-23
+
+### 修复
+- 🔧 **Next.js 兼容性修复**: 解决 "Unexpected undici error: Unexpected token '... is not valid JSON" 错误
+- 🛡️ **JSON 解析优化**: 新增 `safeParseJson` 方法，安全处理编码和格式问题
+- 🌐 **环境自动检测**: 自动识别 Next.js 环境并应用兼容性配置
+
+### 改进
+- ⚡ **压缩算法优化**: 在 Next.js 中使用更保守的压缩算法 (gzip, deflate)，禁用 brotli
+- 🔄 **HTTP/2 兼容**: 在 Next.js 中自动禁用 HTTP/2 以提高兼容性
+- 📊 **错误处理增强**: 提供详细的 JSON 解析错误信息和调试日志
+- 🔍 **响应类型检查**: 自动检测并处理 HTML 错误页面
+
+### 新增
+- 📚 **Next.js 使用指南**: 新增专门的 Next.js 环境使用文档 (`docs/nextjs-usage.md`)
+- 🧪 **兼容性测试**: 添加 Next.js 环境测试脚本 (`test-nextjs.js`)
+
+### 技术细节
+- 新增环境检测逻辑：`process.env.NEXT_RUNTIME || process.env.NODE_ENV === 'production' || process.env.VERCEL`
+- 优化 `safeParseJson` 方法：支持 JSON 解析失败后的文本回退机制
+- 改进压缩头部处理：移除不必要的 content-encoding 设置，让 undici 自动处理
+
 ## [1.0.5] - 2025-10-23
 
 ### 修复

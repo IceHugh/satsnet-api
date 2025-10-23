@@ -63,14 +63,18 @@ export class AdvancedHttpClient {
   private agent?: Agent;
 
   constructor(config: AdvancedHttpConfig) {
+    // 检测 Next.js 环境
+    const isNextJS = typeof window === 'undefined' &&
+      (process.env.NEXT_RUNTIME || process.env.NODE_ENV === 'production' || process.env.VERCEL);
+
     this.config = {
       connections: 50,
       keepAlive: false, // 默认禁用以避免 undici 兼容性问题
       keepAliveTimeout: 60000,
-      http2: true,
+      http2: !isNextJS, // 在 Next.js 环境中禁用 HTTP/2 以提高兼容性
       maxConcurrentStreams: 100,
       compression: true,
-      acceptEncoding: ['gzip', 'deflate', 'br'],
+      acceptEncoding: isNextJS ? ['gzip', 'deflate'] : ['gzip', 'deflate', 'br'], // Next.js 中禁用 brotli
       cache: true,
       cacheMaxAge: 300000, // 5 minutes
       metrics: true,
@@ -288,7 +292,8 @@ export class AdvancedHttpClient {
     const response = await this.makeRequest(url, headers);
     this.validateResponse(response, url);
 
-    const data = await response.body.json();
+    // 安全的 JSON 解析，处理编码和格式问题
+    const data = await this.safeParseJson(response);
 
     // 缓存成功响应
     if (response.statusCode === 200) {
@@ -313,6 +318,59 @@ export class AdvancedHttpClient {
     }
 
     return headers;
+  }
+
+  /**
+   * 安全解析 JSON 响应
+   */
+  private async safeParseJson(response: {
+    body: {
+      text(): Promise<string>;
+      json(): Promise<unknown>;
+    };
+    headers?: Record<string, string | string[] | undefined>;
+  }) {
+    try {
+      // 首先尝试直接解析 JSON
+      return await response.body.json();
+    } catch (error) {
+      console.warn('JSON parse failed, attempting to parse as text:', error);
+
+      try {
+        // 如果 JSON 解析失败，获取原始文本
+        const text = await response.body.text();
+
+        // 检查是否是 HTML 错误页面
+        if (text.includes('<!DOCTYPE') || text.includes('<html>')) {
+          throw new SatsnetApiError(
+            'Server returned HTML instead of JSON - this may be an error page or proxy issue',
+            500,
+            { responsePreview: text.slice(0, 200) }
+          );
+        }
+
+        // 尝试手动解析文本为 JSON
+        return JSON.parse(text);
+      } catch (textError) {
+        // 提供更详细的错误信息用于调试
+        console.error('Response parsing failed:', {
+          jsonError: error,
+          textError,
+          contentType: response.headers?.['content-type'],
+          contentLength: response.headers?.['content-length']
+        });
+
+        throw new SatsnetApiError(
+          `Invalid JSON response: ${textError instanceof Error ? textError.message : 'Unknown error'}`,
+          500,
+          {
+            originalError: error,
+            textError,
+            contentType: response.headers?.['content-type']
+          }
+        );
+      }
+    }
   }
 
   /**
@@ -393,7 +451,8 @@ export class AdvancedHttpClient {
     const response = await this.makePostRequest(url, headers, body);
     this.validateResponse(response, url);
 
-    const data = await response.body.json();
+    // 安全的 JSON 解析，处理编码和格式问题
+    const data = await this.safeParseJson(response);
     return this.processResponse<T>(data);
   }
 
@@ -407,10 +466,9 @@ export class AdvancedHttpClient {
       'content-type': 'application/json',
     };
 
-    // 添加压缩支持
+    // 只添加接受编码头，让 undici 自动处理压缩
     if (this.config.compression && this.config.acceptEncoding) {
       headers['accept-encoding'] = this.config.acceptEncoding.join(', ');
-      headers['content-encoding'] = 'gzip';
     }
 
     return headers;
@@ -424,9 +482,13 @@ export class AdvancedHttpClient {
     headers: Record<string, string>,
     body: Record<string, unknown>
   ) {
+    // 移除 content-encoding 头部，让 undici 自动处理压缩
+    const postHeaders = { ...headers };
+    delete postHeaders['content-encoding'];
+
     return request(url, {
       method: 'POST',
-      headers,
+      headers: postHeaders,
       body: JSON.stringify(body),
       dispatcher: this.dispatcher,
       bodyTimeout: this.config.timeout ?? 15000,
