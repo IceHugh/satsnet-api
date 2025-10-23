@@ -17,9 +17,9 @@ export class HttpClient {
         'Content-Type': 'application/json',
         'User-Agent': 'satsnet-api/1.0.0',
       },
-      // Advanced undici optimization
+      // Advanced undici optimization - 保守默认配置确保兼容性
       connections: 50,
-      keepAlive: true,
+      keepAlive: false, // 默认禁用 keepAlive 以避免兼容性问题
       keepAliveTimeout: 60000,
       http2: true,
       maxConcurrentStreams: 100,

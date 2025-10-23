@@ -65,7 +65,7 @@ export class AdvancedHttpClient {
   constructor(config: AdvancedHttpConfig) {
     this.config = {
       connections: 50,
-      keepAlive: true,
+      keepAlive: false, // 默认禁用以避免 undici 兼容性问题
       keepAliveTimeout: 60000,
       http2: true,
       maxConcurrentStreams: 100,
@@ -124,9 +124,12 @@ export class AdvancedHttpClient {
       const poolOptions: Record<string, unknown> = {
         connections: this.config.connections,
         keepAliveTimeout: this.config.keepAliveTimeout,
+        // 修复 keepAlive 错误：对于 HTTP/1.1，需要禁用 pipelining 或调整 keepAlive 配置
+        pipelining: 0, // 禁用 pipelining 以支持 keepAlive
       };
 
-      if (this.config.keepAlive !== false) {
+      // 只在明确启用时才设置 keepAlive，并且确保兼容性
+      if (this.config.keepAlive === true) {
         poolOptions.keepAlive = true;
       }
 
