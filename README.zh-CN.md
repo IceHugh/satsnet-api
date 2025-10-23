@@ -14,7 +14,7 @@
 
 ## ✨ 特性
 
-- 🚀 **高性能**: 使用 Bun 和 undici 实现最佳性能，支持 HTTP/2 和连接池
+- 🚀 **高性能**: 使用 Bun 和 undici 实现最佳性能，支持 HTTP/1.1 连接池
 - 🔒 **TypeScript 支持**: 完整的类型定义和类型安全，基于实际API响应
 - 🛡️ **智能错误处理**: 统一的错误处理机制，支持参数验证和详细错误信息
 - ⚙️ **灵活配置**: 支持动态域名和网络配置，支持运行时切换
@@ -210,7 +210,7 @@ interface ApiConfig {
   retries?: number;     // 重试次数 (默认: 3)
   headers?: Record<string, string>; // 自定义请求头
   connections?: number; // 连接池大小 (默认: 50)
-  http2?: boolean;      // 启用 HTTP/2 (默认: true)
+  keepAlive?: boolean;  // 启用 HTTP keep-alive (默认: false)
   cache?: boolean;      // 启用缓存 (默认: true)
 }
 ```

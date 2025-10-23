@@ -307,9 +307,7 @@ export interface ApiConfig {
   retries?: number;
   headers?: Record<string, string>;
   connections?: number;
-  http2?: boolean;
   keepAlive?: boolean;
-  maxConcurrentStreams?: number;
 }
 
 /**

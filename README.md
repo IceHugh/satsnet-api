@@ -147,7 +147,7 @@ interface ApiConfig {
   retries?: number;      // Number of retry attempts (default: 3)
   headers?: Record<string, string>; // Custom headers
   connections?: number;  // Connection pool size (default: 50)
-  http2?: boolean;      // Enable HTTP/2 (default: true)
+  keepAlive?: boolean;   // Enable HTTP keep-alive (default: false)
   cache?: boolean;       // Enable caching (default: true)
 }
 ```

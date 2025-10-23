@@ -16,7 +16,6 @@ describe('SatsNet Performance Tests', () => {
       timeout: 60000, // 性能测试需要更长超时
       connections: 20, // 增加连接数以提高并发性能
       keepAlive: true,
-      http2: true,
     });
   });
 
@@ -296,7 +295,6 @@ describe('SatsNet Performance Tests', () => {
           baseUrl: apiEndpoints.mainnet.baseUrl,
           network: apiEndpoints.mainnet.network,
           timeout: 30000,
-          http2: false,
           connections: 50,
           keepAlive: true,
         });

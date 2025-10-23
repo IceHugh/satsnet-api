@@ -21,8 +21,6 @@ export class HttpClient {
       connections: 50,
       keepAlive: false, // 默认禁用 keepAlive 以避免兼容性问题
       keepAliveTimeout: 60000,
-      http2: true,
-      maxConcurrentStreams: 100,
       compression: true,
       acceptEncoding: ['gzip', 'deflate', 'br'],
       cache: true,

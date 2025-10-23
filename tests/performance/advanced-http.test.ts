@@ -16,7 +16,6 @@ describe('AdvancedHttpClient Performance Tests', () => {
       timeout: 60000,
       connections: 50,
       keepAlive: true,
-      http2: true,
       compression: true,
       cache: true,
       cacheMaxAge: 300000,
