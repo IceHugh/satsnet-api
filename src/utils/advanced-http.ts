@@ -329,7 +329,7 @@ export class AdvancedHttpClient {
   }
 
   /**
-   * 安全解析 JSON 响应 - 支持手动解压 gzip
+   * 安全解析 JSON 响应 - 优先使用 undici 原生解析
    */
   private async safeParseJson(response: {
     body: any;
@@ -339,34 +339,22 @@ export class AdvancedHttpClient {
       const encoding = response.headers?.['content-encoding'];
       console.log(`[AdvancedHttpClient] Response encoding: ${encoding}`);
 
-      // Next.js 环境简化处理，不使用 stream
-      if (this.config.isNextJS) {
-        console.log('[AdvancedHttpClient] Next.js detected, using simplified JSON parsing');
-        return await response.body.json();
+      // 优先使用原生解析
+      const result = await this.tryNativeJsonParse(response);
+      if (result.success) {
+        return result.data;
       }
 
-      // 其他环境支持手动解压
-      if (encoding === 'gzip' || encoding === 'deflate') {
-        console.log(`[AdvancedHttpClient] Manually decompressing ${encoding} response`);
-
-        const chunks: Buffer[] = [];
-        const stream =
-          encoding === 'gzip'
-            ? response.body.pipe(createGunzip())
-            : response.body.pipe(createInflate());
-
-        for await (const chunk of stream) {
-          chunks.push(chunk);
+      // 原生解析失败，尝试手动解压
+      if (!this.config.isNextJS && encoding && this.shouldTryManualDecompression(encoding)) {
+        const manualResult = await this.tryManualDecompression(response, encoding);
+        if (manualResult.success) {
+          return manualResult.data;
         }
-
-        const text = Buffer.concat(chunks).toString('utf8');
-        console.log(`[AdvancedHttpClient] Decompressed text length: ${text.length}`);
-
-        return JSON.parse(text);
       }
 
-      // 否则直接用 undici 的 body.json()
-      return await response.body.json();
+      // 所有方法都失败，抛出原生错误
+      throw result.error;
     } catch (error) {
       console.warn('JSON parse failed:', error);
 
@@ -381,6 +369,72 @@ export class AdvancedHttpClient {
           contentEncoding: response.headers?.['content-encoding'],
         }
       );
+    }
+  }
+
+  /**
+   * 尝试使用 undici 原生 JSON 解析
+   */
+  private async tryNativeJsonParse(response: {
+    body: any;
+  }): Promise<{ success: true; data: any } | { success: false; error: Error }> {
+    try {
+      console.log('[AdvancedHttpClient] Using undici native JSON parsing');
+      const data = await response.body.json();
+      return { success: true, data };
+    } catch (error) {
+      console.warn('[AdvancedHttpClient] Native parsing failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error('Native parsing failed'),
+      };
+    }
+  }
+
+  /**
+   * 检查是否应该尝试手动解压
+   */
+  private shouldTryManualDecompression(encoding?: string | string[]): boolean {
+    const encodingValue = Array.isArray(encoding) ? encoding[0] : encoding;
+    return encodingValue === 'gzip' || encodingValue === 'deflate';
+  }
+
+  /**
+   * 尝试手动解压响应
+   */
+  private async tryManualDecompression(
+    response: {
+      body: any;
+    },
+    encoding: string | string[]
+  ): Promise<{ success: true; data: any } | { success: false; error: Error }> {
+    try {
+      const encodingValue = Array.isArray(encoding) ? encoding[0] : encoding;
+      console.log(`[AdvancedHttpClient] Attempting manual decompression for ${encodingValue}`);
+
+      const chunks: Buffer[] = [];
+      const stream =
+        encodingValue === 'gzip'
+          ? response.body.pipe(createGunzip())
+          : response.body.pipe(createInflate());
+
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+
+      const text = Buffer.concat(chunks).toString('utf8');
+      console.log(
+        `[AdvancedHttpClient] Manual decompression successful, text length: ${text.length}`
+      );
+
+      const data = JSON.parse(text);
+      return { success: true, data };
+    } catch (error) {
+      console.warn('[AdvancedHttpClient] Manual decompression failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error : new Error('Manual decompression failed'),
+      };
     }
   }
 
