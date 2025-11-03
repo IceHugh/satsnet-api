@@ -1,6 +1,6 @@
 {
   "name": "@btclib/satsnet-api",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "author": "icehugh <ygz14835187@163.com>",
   "repository": {
     "type": "git",
@@ -16,10 +16,17 @@
     "utxo",
     "typescript",
     "bun",
-    "undici",
-    "http-client"
+    "node",
+    "deno",
+    "edge-runtime",
+    "browser",
+    "ofetch",
+    "http-client",
+    "cloudflare-pages",
+    "universal",
+    "isomorphic"
   ],
-  "description": "A high-performance satsnet protocol API library built with Bun, TypeScript, undici, and radash",
+  "description": "A high-performance satsnet protocol API library with universal runtime support for Bun, Node.js, Deno, Edge Runtimes, and Browsers",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -27,17 +34,31 @@
   "types": "dist/index.d.ts",
   "readme": "README.md",
   "engines": {
+    "node": ">=16.0.0",
     "bun": ">=1.0.0",
-    "node": ">=20.0.0"
+    "deno": ">=1.30.0"
+  },
+  "runtime": {
+    "supports": ["node", "bun", "deno", "edge-runtime", "browser"],
+    "universal": true,
+    "isomorphic": true
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.cjs",
+      "browser": "./dist/index.js",
+      "deno": "./dist/index.js",
+      "edge": "./dist/index.js"
     },
     "./types": {
       "types": "./dist/types.d.ts"
+    },
+    "./universal": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "browser": "./dist/index.js"
     }
   },
   "files": [
@@ -50,7 +71,8 @@
     "url": "https://github.com/icehugh/satsnet-api/issues"
   },
   "dependencies": {
-    "radash": "^12.0.0"
+    "radash": "^12.0.0",
+    "ofetch": "^1.3.4"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
@@ -59,39 +81,48 @@
     "bun-types": "latest",
     "terser": "^5.36.0",
     "tsc-alias": "^1.8.16",
-    "typescript": "^5.3.0",
-    "undici": "^7.16.0"
-  },
-  "peerDependenciesMeta": {
-    "undici": {
-      "optional": false
-    }
+    "typescript": "^5.3.0"
   },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target node --format esm --splitting --external undici && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
-    "build:cjs": "bun build src/index.ts --outdir dist --target node --format cjs --external undici --outfile index.cjs && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
-    "build:prod": "bun run clean && bun run build:prod:esm && bun run build:prod:cjs && bun run build:types && bun run minify",
-    "build:prod:esm": "bun build src/index.ts --outdir dist --target node --format esm --splitting --external undici --minify",
-    "build:prod:cjs": "bun build src/index.ts --target node --format cjs --external undici --outfile dist/index.cjs --minify",
+    "build": "bun build src/index.ts --outdir dist --target node --format esm --splitting && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:cjs": "bun build src/index.ts --outdir dist --target node --format cjs --outfile index.cjs && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:web": "bun build src/index.ts --outdir dist --target browser --format esm --splitting --minify && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:deno": "bun build src/index.ts --outdir dist --target browser --format esm --splitting --minify && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json && cp dist/index.js dist/deno.js",
+    "build:edge": "bun build src/index.ts --outdir dist --target browser --format esm --splitting --minify && tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "build:universal": "bun run build:web && cp dist/index.js dist/universal.js",
+    "build:cloudflare": "bun build src/index.ts --outdir dist --target browser --format esm --splitting --minify && node scripts/postprocess-cloudflare.js",
+    "build:all": "bun run clean && bun run build && bun run build:web && bun run build:deno && bun run build:universal",
+    "build:prod": "bun run clean && bun run build:prod:esm && bun run build:prod:cjs && bun run build:types && bun run minify && bun run build:web && bun run build:deno",
+    "build:prod:esm": "bun build src/index.ts --outdir dist --target node --format esm --splitting --minify",
+    "build:prod:cjs": "bun build src/index.ts --target node --format cjs --outfile dist/index.cjs --minify",
+    "build:deno:prod": "bun build src/index.ts --outdir dist --target deno --format esm --splitting --minify --outfile dist/deno.js",
     "build:types": "tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json",
     "minify": "bun run minify:esm && bun run minify:cjs",
     "minify:esm": "terser dist/index.js --compress --mangle --source-map --output dist/index.min.js",
     "minify:cjs": "terser dist/index.cjs --compress --mangle --source-map --output dist/index.min.cjs",
     "build:analyze": "bun run build:prod && bun --bun scripts/analyze-bundle.js",
     "dev": "bun --watch src/index.ts",
+    "dev:node": "node --watch src/index.ts",
+    "dev:deno": "deno run --watch src/index.ts",
     "start": "bun dist/index.js",
+    "start:node": "node dist/index.js",
+    "start:deno": "deno run dist/index.js",
     "test": "bun test",
+    "test:node": "node --test tests/**/*.test.js",
+    "test:deno": "deno test tests/**/*.test.ts",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "test:unit": "bun test tests/unit",
     "test:integration": "bun test tests/integration",
     "test:performance": "bun test tests/performance",
     "test:api-types": "bun run scripts/run-api-tests.ts",
+    "test:cloudflare": "bun test tests/cloudflare",
     "type-check": "tsc --noEmit",
     "lint": "bunx @biomejs/biome check src/ tests/",
     "lint:fix": "bunx @biomejs/biome check --fix src/ tests/",
     "audit": "bun audit",
     "audit:fix": "bun audit --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "predeploy:cloudflare": "bun run build:cloudflare && bun run test:cloudflare"
   }
 }

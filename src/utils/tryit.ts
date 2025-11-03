@@ -146,11 +146,6 @@ function wrapError(error: unknown): SatsnetApiError {
     return error;
   }
 
-  // Handle undici specific errors
-  if (error && typeof error === 'object' && 'name' in error) {
-    return wrapUndiciError(error as { name: string; message: string });
-  }
-
   if (error instanceof Error) {
     return wrapGenericError(error);
   }
@@ -158,33 +153,6 @@ function wrapError(error: unknown): SatsnetApiError {
   return new SatsnetApiError(`Unknown error: ${String(error)}`, -11, {
     originalError: error,
     type: 'UNKNOWN_ERROR',
-  });
-}
-
-/**
- * 包装 Undici 错误
- */
-function wrapUndiciError(error: { name: string; message: string }): SatsnetApiError {
-  const errorMap = {
-    ConnectTimeoutError: { code: -1, type: 'CONNECT_TIMEOUT' },
-    BodyTimeoutError: { code: -2, type: 'BODY_TIMEOUT' },
-    HeadersTimeoutError: { code: -3, type: 'HEADERS_TIMEOUT' },
-    RequestTimeoutError: { code: -4, type: 'REQUEST_TIMEOUT' },
-    SocketError: { code: -5, type: 'SOCKET_ERROR' },
-    ErrorsUndiciError: { code: -6, type: 'HTTP_ERROR' },
-  };
-
-  const errorInfo = errorMap[error.name as keyof typeof errorMap];
-  if (errorInfo) {
-    return new SatsnetApiError(`${errorInfo.type}: ${error.message}`, errorInfo.code, {
-      originalError: error.message,
-      type: errorInfo.type,
-    });
-  }
-
-  return new SatsnetApiError(`Unexpected undici error: ${error.message}`, -10, {
-    originalError: error.message,
-    type: 'UNEXPECTED_ERROR',
   });
 }
 

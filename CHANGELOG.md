@@ -128,7 +128,7 @@
 ### 新增
 - 🎉 初始版本发布
 - ✨ 完整的 SatsNet API 客户端
-- 🚀 高性能 HTTP 客户端 (基于 undici)
+- 🚀 高性能 HTTP 客户端 (基于 ofetch)
 - 🔧 TypeScript 支持
 - 🛡️ 错误处理机制 (tryit 系列)
 - 📊 批量请求支持

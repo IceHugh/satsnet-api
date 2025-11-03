@@ -6,29 +6,28 @@
 
 ```bash
 # 使用 bun (推荐)
-bun add @btclib/satsnet-api undici@^7.16.0
+bun add @btclib/satsnet-api
 
 # 使用 npm
-npm install @btclib/satsnet-api undici@^7.16.0
+npm install @btclib/satsnet-api
 
 # 使用 yarn
-yarn add @btclib/satsnet-api undici@^7.16.0
+yarn add @btclib/satsnet-api
 ```
 
 ### 依赖要求
 
-- **Node.js**: >= 20.0.0 或 Bun >= 1.0.0
-- **undici**: ^7.16.0 (高性能HTTP客户端)
+- **Node.js**: >= 16.0.0 或 Bun >= 1.0.0
 - **运行环境**: 支持 ESM 格式
 
-### 为什么需要手动安装 undici？
+### 为什么选择 ofetch？
 
-使用 `peerDependencies` 设计有以下优势：
+项目使用 ofetch 作为 HTTP 客户端，提供以下优势：
 
-1. **更小的包体积**: 构建包仅 28.13KB（vs 730MB）
-2. **避免版本冲突**: 用户可以选择适合的 undici 版本
-3. **更好的性能**: 使用本地安装的 undici，减少依赖层级
-4. **灵活的依赖管理**: 支持项目自定义 HTTP 客户端配置
+1. **更小的包体积**: 构建包仅 28.13KB（压缩后更小）
+2. **通用兼容性**: 支持 Node.js、Bun、Deno、Edge Runtime 和浏览器
+3. **更好的性能**: 使用 ofetch 减少依赖层级，提升加载速度
+4. **零配置**: 开箱即用，无需额外配置 HTTP 客户端
 
 ## 第一个示例
 

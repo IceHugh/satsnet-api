@@ -1,7 +1,7 @@
 /**
  * SatsNet API Library
  * High-performance Bitcoin/Ordinals API client with TypeScript support
- * Built with Bun, undici, and radash for optimal performance
+ * Built with Bun, ofetch, and radash for optimal performance
  */
 
 // Export main client
@@ -20,6 +20,7 @@ export type {
   EnvironmentConfig,
   FeeRates,
   HealthCheckResponse,
+  IHttpClient,
   NameInfoResponse,
   NameService,
   NameServiceListResponse,
@@ -41,6 +42,8 @@ export { createSafeClient, SafeSatsNetClient, safeSatsnet } from '@/utils/api-wr
 // Export utilities
 export { ErrorHandler } from '@/utils/errors';
 export { HttpClient } from '@/utils/http';
+export { createHttpClient } from '@/utils/http-factory';
+export type { HttpConfig, PerformanceMetrics } from '@/utils/http';
 export {
   isError,
   isSuccess,

@@ -48,7 +48,7 @@ class ProductionBuilder {
 
     try {
       // 使用 Bun 构建 ESM
-      execSync('bun build src/index.ts --outdir dist --target node --format esm --splitting --external undici', {
+      execSync('bun build src/index.ts --outdir dist --target node --format esm --splitting', {
         stdio: 'inherit'
       });
 
@@ -70,7 +70,7 @@ class ProductionBuilder {
     console.log('📦 构建 CommonJS 格式...');
 
     try {
-      execSync('bun build src/index.ts --outdir dist --target node --format cjs --external undici --outfile index.cjs', {
+      execSync('bun build src/index.ts --outdir dist --target node --format cjs --outfile index.cjs', {
         stdio: 'inherit'
       });
 

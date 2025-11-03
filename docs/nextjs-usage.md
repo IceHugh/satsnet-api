@@ -17,10 +17,7 @@ import { SatsNetClient } from '@btclib/satsnet-api';
 const nextjsClient = new SatsNetClient({
   network: 'mainnet',
   timeout: 15000,
-  retries: 3,
-  keepAlive: true,           // 启用 keep-alive 提高性能
-  compression: false,        // 禁用压缩确保兼容性
-  isNextJS: true,            // 启用 Next.js 兼容模式
+  、            // 启用 Next.js 兼容模式
   baseUrl: 'https://apiprd.ordx.market',
 });
 ```

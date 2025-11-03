@@ -5,24 +5,27 @@
 ![SatsNet API](https://img.shields.io/badge/SatsNet%20API-1.1.2-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)
-![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)
-![Bun](https://img.shields.io/badge/bun-%3E%3D1.0.0-black)
+![Universal](https://img.shields.io/badge/Universal%20Runtime-brightgreen)
+![Multi-Platform](https://img.shields.io/badge/Platform-Node%20%7C%20Bun%20%7C%20Deno%20%7C%20Browser-9cf)
+![ofetch](https://img.shields.io/badge/ofetch-1.5+-orange)
 
 </div>
 
-A high-performance SatsNet protocol API library built with Bun, TypeScript, undici, and radash.
+A high-performance SatsNet protocol API library with universal runtime support for **Node.js**, **Bun**, **Deno**, **Edge Runtimes**, and **Browsers**. Built with TypeScript, ofetch, and radash for optimal performance across all platforms.
 
 ## ✨ Features
 
-- 🚀 **High Performance**: Built with Bun and undici for optimal performance
+- 🌍 **Universal Runtime**: Works seamlessly in Node.js, Bun, Deno, Edge Runtimes, and Browsers
+- 🚀 **High Performance**: Built with ofetch for optimal HTTP performance across all platforms
 - 🔒 **TypeScript Support**: Full TypeScript support with strict type checking
 - 🛡️ **Smart Error Handling**: Comprehensive error handling with detailed error messages
 - ⚙ **Flexible Configuration**: Dynamic configuration support for different networks and endpoints
 - 🔄 **Retry Mechanism**: Built-in retry logic with exponential backoff
 - 📊 **Performance Metrics**: Built-in caching and performance monitoring
-- 🌐 **Browser Compatible**: Works in both Node.js and browser environments
+- 🌐 **Isomorphic Design**: Same API works everywhere without environment-specific code
 - 📦 **Batch Requests**: Support for parallel API calls to improve efficiency
 - ✅ **Input Validation**: Built-in validation for Bitcoin addresses, transaction IDs, and UTXOs
+- 🔧 **Zero Configuration**: Works out of the box with smart defaults
 
 ## 🚀 Quick Start
 
@@ -34,9 +37,15 @@ bun add @btclib/satsnet-api
 
 # or npm
 npm install @btclib/satsnet-api
+
+# or pnpm
+pnpm add @btclib/satsnet-api
+
+# or yarn
+yarn add @btclib/satsnet-api
 ```
 
-**Note**: This library requires `undici` as a peer dependency for optimal performance.
+**Universal Runtime Support**: Works in Node.js, Bun, Deno, Edge Runtimes, and Browsers with no additional configuration required.
 
 ### Basic Usage
 
@@ -61,6 +70,87 @@ const nextjsClient = new SatsNetClient({
   isNextJS: true,  // Required for Next.js compatibility
   compression: false
 });
+```
+
+## 🌍 Universal Runtime Examples
+
+The same API works across all runtimes without any changes:
+
+### Node.js / Bun
+```typescript
+import { SatsNetClient } from '@btclib/satsnet-api';
+
+const client = new SatsNetClient({
+  network: 'mainnet',
+  timeout: 10000
+});
+
+const utxos = await client.getUtxos('bc1q...');
+console.log('UTXOs:', utxos);
+```
+
+### Deno
+```typescript
+import { SatsNetClient } from 'https://deno.land/x/satsnet_api/mod.ts';
+
+const client = new SatsNetClient({
+  network: 'mainnet',
+  timeout: 10000
+});
+
+const utxos = await client.getUtxos('bc1q...');
+console.log('UTXOs:', utxos);
+```
+
+### Browser / Edge Runtime
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="module">
+        import { SatsNetClient } from 'https://cdn.skypack.dev/@btclib/satsnet-api';
+
+        const client = new SatsNetClient();
+
+        async function fetchUTXOs() {
+            try {
+                const utxos = await client.getUtxos('bc1q...');
+                console.log('UTXOs:', utxos);
+            } catch (error) {
+                console.error('Error:', error.message);
+            }
+        }
+
+        fetchUTXOs();
+    </script>
+</head>
+<body>
+    <h1>SatsNet API Example</h1>
+</body>
+</html>
+```
+
+### Cloudflare Pages / Edge Functions
+```typescript
+// functions/api/utxos/[address].ts
+import { SatsNetClient } from '@btclib/satsnet-api';
+
+export async function onRequest(context) {
+  const { params } = context;
+  const client = new SatsNetClient();
+
+  try {
+    const utxos = await client.getUtxos(params.address);
+    return new Response(JSON.stringify(utxos), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
 ```
 
 ## 📚 API Examples
@@ -304,38 +394,61 @@ results.forEach(([error, result], index) => {
 });
 ```
 
-## 🧪 Development
+## 🏗️ Building & Deployment
 
-### Building
+### Multi-Runtime Building
 
 ```bash
-# Build for development
-bun run build
+# Build for all platforms
+npm run build:all
 
-# Build for production
-bun run build:prod
+# Build for specific platforms
+npm run build          # Node.js (ESM)
+npm run build:cjs       # Node.js (CommonJS)
+npm run build:web       # Browser/Edge Runtime
+npm run build:deno      # Deno
+npm run build:cloudflare # Cloudflare Pages
+
+# Production builds
+npm run build:prod      # All platforms, optimized
+```
+
+### Development
+
+```bash
+# Development with different runtimes
+npm run dev            # Bun
+npm run dev:node       # Node.js
+npm run dev:deno       # Deno
 
 # Type checking
-bun run type-check
+npm run type-check
 
 # Linting
-bun run lint
-bun run lint:fix
+npm run lint
+npm run lint:fix
 ```
 
 ### Testing
 
 ```bash
 # Run all tests
-bun test
+npm test
+
+# Run tests with specific runtimes
+npm run test:node       # Node.js testing
+npm run test:deno       # Deno testing
 
 # Run specific test suites
-bun run test:unit
-bun run test:integration
-bun run test:performance
+npm run test:unit
+npm run test:integration
+npm run test:performance
 
-# Type checking only
-bun run type-check
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:coverage
 ```
 
 ## 🔒 Input Validation
@@ -410,8 +523,68 @@ const livenetClient = new SatsNetClient({ network: 'livenet' });
 ## 📈 Bundle Size
 
 - **Main Package**: ~28.13 kB (uncompressed)
-- **With Dependencies**: ~98.4 kB (includes undici)
+- **With Dependencies**: ~92.1 kB (includes ofetch)
 - **Tree Shakable**: Supports optimal tree shaking
+
+## 🌍 Cloudflare Pages Deployment
+
+Deploy SatsNet API to Cloudflare Pages for global edge deployment:
+
+### Quick Deploy
+
+```bash
+# Build for Cloudflare Pages
+npm run build:cloudflare
+
+# Deploy using Wrangler CLI
+wrangler pages deploy dist --project-name satsnet-api
+```
+
+### Environment Detection
+
+The library automatically detects the runtime environment:
+
+```typescript
+import { getEnvironmentInfo } from '@btclib/satsnet-api';
+
+const envInfo = getEnvironmentInfo();
+console.log('Environment:', envInfo);
+// Output: { isWeb: true, isCloudflarePages: true, isNode: false, runtime: 'Cloudflare Pages' }
+```
+
+### Cloudflare Pages Features
+
+- ✅ **Automatic Environment Detection**: Runtime detection for optimal client selection
+- ✅ **Global CDN**: Automatic worldwide distribution
+- ✅ **Edge Computing**: Run at edge locations for low latency
+- ✅ **Zero Configuration**: Works out of the box
+- ✅ **Type Safety**: Full TypeScript support
+
+### Example Usage in Cloudflare Pages
+
+```typescript
+// functions/api/utxos/[address].ts
+import { SatsNetClient } from '@btclib/satsnet-api';
+
+export async function onRequest(context) {
+  const { params } = context;
+  const client = new SatsNetClient();
+
+  try {
+    const utxos = await client.getUtxos(params.address);
+    return new Response(JSON.stringify(utxos), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+```
+
+📖 **[Complete Cloudflare Pages Deployment Guide](./docs/cloudflare-pages-deployment.md)**
 
 ## 📄 Changelog
 
@@ -431,6 +604,7 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 - 🚀 [Getting Started Guide](./docs/guide/getting-started.md)
 - 🔧 [Advanced Usage](./docs/guide/advanced-usage.md)
 - ⚛️ [Next.js Usage Guide](./docs/nextjs-usage.md)
+- 🌍 [Cloudflare Pages Deployment Guide](./docs/cloudflare-pages-deployment.md)
 - 🐛 [Contributing Guide](./CONTRIBUTING.md)
 - 🔒 [Security Policy](./SECURITY.md)
 

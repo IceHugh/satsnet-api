@@ -413,3 +413,18 @@ export interface EnvironmentConfig {
   ordxBaseUrl: string;
   network: Network;
 }
+
+
+/**
+ * HTTP Client interface
+ */
+export interface IHttpClient {
+  get<T>(path: string, params?: Record<string, unknown>): Promise<T>;
+  post<T>(path: string, body: Record<string, unknown>): Promise<T>;
+  batchRequest<T>(requests: Array<{ path: string; params?: Record<string, unknown> }>): Promise<T[]>;
+  getMetrics(): unknown;
+  clearCache(): void;
+  updateConfig(newConfig: Partial<ApiConfig>): void;
+  getConfig(): ApiConfig;
+  close(): Promise<void>;
+}

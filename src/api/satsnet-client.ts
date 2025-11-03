@@ -15,8 +15,8 @@ import {
   type Utxo,
   type UtxoResponse,
 } from '@/types';
-import type { AdvancedHttpConfig } from '@/utils/advanced-http';
-import { HttpClient } from '@/utils/http';
+import type { HttpConfig } from '@/utils/http';
+import { createHttpClient, type HttpClient } from '@/utils/http-factory';
 import { tryitAll } from '@/utils/tryit';
 
 /**
@@ -74,12 +74,8 @@ export class SatsNetClient {
 
     this.config = { ...defaultConfig, ...config };
 
-    // 将配置传递给 HttpClient
-    const httpConfig = {
-      ...this.config,
-    };
-
-    this.httpClient = new HttpClient(httpConfig);
+    // 使用工厂创建适当的 HTTP 客户端
+    this.httpClient = createHttpClient(this.config);
   }
 
   /**
@@ -442,10 +438,11 @@ export class SatsNetClient {
   }
 
   /**
-   * Update advanced HTTP configuration
-   * @param newConfig - New advanced configuration
+   * Update HTTP configuration
+   * @param newConfig - New configuration
    */
-  async updateAdvancedConfig(newConfig: Partial<AdvancedHttpConfig>): Promise<void> {
-    await this.httpClient.updateAdvancedConfig(newConfig);
+  async updateAdvancedConfig(newConfig: Partial<HttpConfig>): Promise<void> {
+    // Use regular updateConfig since we have a universal client
+    this.httpClient.updateConfig(newConfig);
   }
 }

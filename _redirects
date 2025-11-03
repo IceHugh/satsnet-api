@@ -1,0 +1,15 @@
+# Cloudflare Pages Redirects Configuration
+# This file defines URL redirects for Cloudflare Pages deployment
+
+# API versioning
+/api/v1/* /api/:splat 200
+
+# Health check endpoint
+/health /api/health 200
+
+# API documentation
+/docs /api/docs 200
+/api/docs/* /api/docs/:splat 200
+
+# Fallback for single-page applications (if needed)
+/* /index.html 200

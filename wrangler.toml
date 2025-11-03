@@ -1,0 +1,41 @@
+# Cloudflare Pages Configuration for SatsNet API
+# This file configures the deployment settings for Cloudflare Pages
+
+name = "satsnet-api"
+main = "dist/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "npm run build:cloudflare"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+API_VERSION = "1.1.2"
+
+# Production environment
+[env.production]
+name = "satsnet-api-prod"
+vars = { ENVIRONMENT = "production", API_VERSION = "1.1.2" }
+
+# Staging environment
+[env.staging]
+name = "satsnet-api-staging"
+vars = { ENVIRONMENT = "staging", API_VERSION = "1.1.2" }
+
+# KV Namespaces for caching (optional)
+[[kv_namespaces]]
+binding = "SATSNET_CACHE"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+# D1 Database (optional)
+[[d1_databases]]
+binding = "SATSNET_DB"
+database_name = "satsnet-db"
+database_id = "your-database-id"
+
+# Rate limiting configuration
+[limits]
+cpu_ms = 50000
