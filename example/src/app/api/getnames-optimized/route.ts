@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 // 使用优化的 SatsNet API 客户端（保留性能功能，去掉流处理问题）
 import { SatsNetClient } from './optimized-client.js';
@@ -14,18 +14,12 @@ export async function GET(request: NextRequest) {
     // 简单验证
     if (!name) {
       console.log('验证失败: name 参数为空');
-      return NextResponse.json(
-        { error: 'Name 参数是必需的' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 参数是必需的' }, { status: 400 });
     }
 
     if (name.length < 1 || name.length > 100) {
       console.log('验证失败: name 长度不合规:', name.length);
-      return NextResponse.json(
-        { error: 'Name 长度必须在 1-100 字符之间' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 长度必须在 1-100 字符之间' }, { status: 400 });
     }
 
     console.log('验证通过，开始创建优化 SatsNet 客户端...');
@@ -77,9 +71,8 @@ export async function GET(request: NextRequest) {
         implementation: 'optimized',
         features: ['cache', 'connection-pool', 'metrics', 'no-stream-processing'],
         performance: metrics,
-      }
+      },
     });
-
   } catch (error) {
     console.error('=== getNames API 错误详情 (优化版本) ===');
     console.error('错误对象:', error);
@@ -107,7 +100,7 @@ export async function GET(request: NextRequest) {
     console.error('处理后的错误信息 (优化版本):', {
       message: errorMessage,
       code: errorCode,
-      data: errorData
+      data: errorData,
     });
 
     return NextResponse.json(
@@ -125,8 +118,8 @@ export async function GET(request: NextRequest) {
           parameter: name || 'unknown',
           errorStack: error instanceof Error ? error.stack : null,
           implementation: 'optimized',
-          features: ['cache', 'connection-pool', 'metrics', 'no-stream-processing']
-        }
+          features: ['cache', 'connection-pool', 'metrics', 'no-stream-processing'],
+        },
       },
       { status: 500 }
     );

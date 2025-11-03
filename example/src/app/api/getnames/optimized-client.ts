@@ -2,7 +2,7 @@
 // 保留缓存、连接池等性能功能，去掉流处理兼容性问题
 // 参考 @src/utils/advanced-http.ts 的核心功能
 
-import { request, Pool, Agent } from 'undici';
+import { Agent, Pool, request } from 'undici';
 
 // 基础配置接口
 interface ApiConfig {
@@ -61,7 +61,7 @@ interface NameService {
 class SatsnetApiError extends Error {
   constructor(
     message: string,
-    public code: number = -1,
+    public code = -1,
     public data?: any
   ) {
     super(message);
@@ -70,10 +70,7 @@ class SatsnetApiError extends Error {
 }
 
 // 重试工具函数
-async function tryitWithRetry<T>(
-  fn: () => Promise<T>,
-  retries: number = 3
-): Promise<() => Promise<T>> {
+async function tryitWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<() => Promise<T>> {
   return async () => {
     let lastError: unknown;
 
@@ -89,8 +86,8 @@ async function tryitWithRetry<T>(
         }
 
         // 简单的指数退避
-        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        const delay = Math.min(1000 * 2 ** attempt, 5000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
@@ -106,13 +103,13 @@ class OptimizedHttpClient {
   private cache = new Map<string, { data: unknown; timestamp: number }>();
 
   constructor(config: AdvancedHttpConfig) {
-    console.log(`[OptimizedHttpClient] 初始化配置:`, {
+    console.log('[OptimizedHttpClient] 初始化配置:', {
       baseUrl: config.baseUrl,
       network: config.network,
       chain: config.chain,
       timeout: config.timeout,
       cache: config.cache,
-      connections: config.connections
+      connections: config.connections,
     });
 
     // 检测 Next.js 环境并优化配置
@@ -307,7 +304,7 @@ class OptimizedHttpClient {
     // 检查缓存
     const cachedData = this.checkCache(cacheKey);
     if (cachedData) {
-      console.log(`[OptimizedHttpClient] 从缓存返回数据`);
+      console.log('[OptimizedHttpClient] 从缓存返回数据');
       return cachedData as T;
     }
 
@@ -334,11 +331,11 @@ class OptimizedHttpClient {
     // 构建 headers
     const headers = {
       'user-agent': 'satsnet-api/1.0.0',
-      'accept': 'application/json',
+      accept: 'application/json',
       'content-type': 'application/json',
     };
 
-    console.log(`[OptimizedHttpClient] 请求头:`, headers);
+    console.log('[OptimizedHttpClient] 请求头:', headers);
 
     try {
       // 使用 undici 发起请求 - 优化的配置
@@ -364,14 +361,14 @@ class OptimizedHttpClient {
       // 优化的响应处理 - 直接使用 body.json() 避免流处理问题
       let data: any;
       try {
-        console.log(`[OptimizedHttpClient] 开始解析 JSON`);
+        console.log('[OptimizedHttpClient] 开始解析 JSON');
         data = await response.body.json();
-        console.log(`[OptimizedHttpClient] JSON 解析成功`);
+        console.log('[OptimizedHttpClient] JSON 解析成功');
       } catch (jsonError) {
-        console.warn(`[OptimizedHttpClient] JSON 解析失败:`, jsonError);
+        console.warn('[OptimizedHttpClient] JSON 解析失败:', jsonError);
 
         // 如果 JSON 解析失败，尝试获取原始响应进行调试
-        console.error(`[OptimizedHttpClient] 响应 headers:`, response.headers);
+        console.error('[OptimizedHttpClient] 响应 headers:', response.headers);
         throw new SatsnetApiError(
           `Invalid JSON response: ${jsonError instanceof Error ? jsonError.message : 'Unknown error'}`,
           500,
@@ -385,15 +382,15 @@ class OptimizedHttpClient {
       }
 
       // 处理 API 响应格式
-      console.log(`[OptimizedHttpClient] 处理响应数据，数据类型:`, typeof data);
+      console.log('[OptimizedHttpClient] 处理响应数据，数据类型:', typeof data);
 
       if (typeof data === 'object' && data !== null && 'code' in data) {
         const apiResponse = data as { code: number; msg: string; data?: unknown };
 
-        console.log(`[OptimizedHttpClient] API包装格式响应:`, {
+        console.log('[OptimizedHttpClient] API包装格式响应:', {
           code: apiResponse.code,
           msg: apiResponse.msg,
-          hasData: !!apiResponse.data
+          hasData: !!apiResponse.data,
         });
 
         if (apiResponse.code !== 0) {
@@ -411,7 +408,7 @@ class OptimizedHttpClient {
           this.storeInCache(cacheKey, result);
         }
 
-        console.log(`[OptimizedHttpClient] 处理后的结果:`, result);
+        console.log('[OptimizedHttpClient] 处理后的结果:', result);
         return result;
       }
 
@@ -420,20 +417,19 @@ class OptimizedHttpClient {
         this.storeInCache(cacheKey, data);
       }
 
-      console.log(`[OptimizedHttpClient] 直接返回数据:`, data);
+      console.log('[OptimizedHttpClient] 直接返回数据:', data);
       return data as T;
-
     } catch (error) {
       if (error instanceof SatsnetApiError) {
-        console.error(`[OptimizedHttpClient] SatsnetApiError:`, {
+        console.error('[OptimizedHttpClient] SatsnetApiError:', {
           message: error.message,
           code: error.code,
-          data: error.data
+          data: error.data,
         });
         throw error;
       }
 
-      console.error(`[OptimizedHttpClient] 请求失败:`, {
+      console.error('[OptimizedHttpClient] 请求失败:', {
         error: error,
         name: error instanceof Error ? error.name : 'Unknown',
         message: error instanceof Error ? error.message : 'No message',
@@ -441,7 +437,7 @@ class OptimizedHttpClient {
 
       if (error instanceof Error && error.name === 'AbortError') {
         throw new SatsnetApiError(`请求超时 (${this.config.timeout}ms)`, -1, {
-          timeout: this.config.timeout
+          timeout: this.config.timeout,
         });
       }
 
@@ -467,14 +463,14 @@ class OptimizedHttpClient {
     this.cache.clear();
     this.metrics.cacheHits = 0;
     this.metrics.cacheMisses = 0;
-    console.log(`[OptimizedHttpClient] 缓存已清理`);
+    console.log('[OptimizedHttpClient] 缓存已清理');
   }
 
   /**
    * 关闭连接池
    */
   async close(): Promise<void> {
-    console.log(`[OptimizedHttpClient] 关闭连接池`);
+    console.log('[OptimizedHttpClient] 关闭连接池');
     if (this.dispatcher && typeof this.dispatcher.close === 'function') {
       await this.dispatcher.close();
     }
@@ -514,7 +510,7 @@ export class SatsNetClient {
     };
 
     this.config = { ...defaultConfig, ...config };
-    console.log(`[SatsNetClient] 创建优化客户端，配置:`, this.config);
+    console.log('[SatsNetClient] 创建优化客户端，配置:', this.config);
 
     this.httpClient = new OptimizedHttpClient(this.config);
   }
@@ -532,7 +528,7 @@ export class SatsNetClient {
    * @returns Promise with name service information
    */
   async getNameInfo(name: string): Promise<NameService> {
-    console.log(`[SatsNetClient] getNameInfo 调用开始（优化版本）`);
+    console.log('[SatsNetClient] getNameInfo 调用开始（优化版本）');
     console.log(`[SatsNetClient] 参数 name: "${name}"`);
     console.log(`[SatsNetClient] 当前网络: ${this.config.network}`);
 
@@ -545,19 +541,18 @@ export class SatsNetClient {
       throw new SatsnetApiError('Invalid name: length must be between 1-100 characters', -1001);
     }
 
-    console.log(`[SatsNetClient] 输入验证通过`);
+    console.log('[SatsNetClient] 输入验证通过');
 
     try {
       // 调用优化的 HTTP 客户端
       const result = await this.httpClient.get<NameService>(`ns/name/${encodeURIComponent(name)}`);
 
-      console.log(`[SatsNetClient] getNameInfo 调用成功（优化版本）`);
-      console.log(`[SatsNetClient] 返回结果:`, result);
+      console.log('[SatsNetClient] getNameInfo 调用成功（优化版本）');
+      console.log('[SatsNetClient] 返回结果:', result);
 
       return result;
-
     } catch (error) {
-      console.error(`[SatsNetClient] getNameInfo 调用失败（优化版本）:`, error);
+      console.error('[SatsNetClient] getNameInfo 调用失败（优化版本）:', error);
       throw error;
     }
   }
@@ -600,7 +595,7 @@ export class SatsNetClient {
    * 关闭客户端
    */
   async close(): Promise<void> {
-    console.log(`[SatsNetClient] 关闭优化客户端`);
+    console.log('[SatsNetClient] 关闭优化客户端');
     await this.httpClient.close();
   }
 }

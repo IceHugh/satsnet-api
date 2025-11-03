@@ -5,9 +5,9 @@
  * 用于分析构建结果的包大小和依赖关系
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs';
-import { join, basename, extname } from 'path';
-import { gzipSync, brotliCompressSync } from 'zlib';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { basename, extname, join } from 'path';
+import { brotliCompressSync, gzipSync } from 'zlib';
 
 class BundleAnalyzer {
   constructor() {
@@ -19,7 +19,7 @@ class BundleAnalyzer {
       totalBrotliSize: 0,
       compressionRatio: {},
       dependencies: {},
-      buildInfo: null
+      buildInfo: null,
     };
   }
 
@@ -71,10 +71,10 @@ class BundleAnalyzer {
       gzipSizeFormatted: this.formatBytes(gzipSize),
       brotliSize,
       brotliSizeFormatted: this.formatBytes(brotliSize),
-      gzipReduction: ((size - gzipSize) / size * 100).toFixed(2),
-      brotliReduction: ((size - brotliSize) / size * 100).toFixed(2),
+      gzipReduction: (((size - gzipSize) / size) * 100).toFixed(2),
+      brotliReduction: (((size - brotliSize) / size) * 100).toFixed(2),
       lastModified: stats.mtime,
-      extension: extname(filePath)
+      extension: extname(filePath),
     };
 
     this.analysis.files[fileName] = fileAnalysis;
@@ -96,23 +96,29 @@ class BundleAnalyzer {
     }
 
     const files = readdirSync(this.distDir);
-    const jsFiles = files.filter(file =>
-      file.endsWith('.js') || file.endsWith('.mjs') || file.endsWith('.cjs')
+    const jsFiles = files.filter(
+      (file) => file.endsWith('.js') || file.endsWith('.mjs') || file.endsWith('.cjs')
     );
 
     if (jsFiles.length === 0) {
       throw new Error('未找到 JavaScript 构建文件');
     }
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       const filePath = join(this.distDir, file);
       this.analyzeFile(filePath);
     });
 
     // 计算总体压缩比
     this.analysis.compressionRatio = {
-      gzip: ((this.analysis.totalSize - this.analysis.totalGzipSize) / this.analysis.totalSize * 100).toFixed(2),
-      brotli: ((this.analysis.totalSize - this.analysis.totalBrotliSize) / this.analysis.totalSize * 100).toFixed(2)
+      gzip: (
+        ((this.analysis.totalSize - this.analysis.totalGzipSize) / this.analysis.totalSize) *
+        100
+      ).toFixed(2),
+      brotli: (
+        ((this.analysis.totalSize - this.analysis.totalBrotliSize) / this.analysis.totalSize) *
+        100
+      ).toFixed(2),
     };
 
     console.log('✅ 文件分析完成');
@@ -129,8 +135,9 @@ class BundleAnalyzer {
       this.analysis.dependencies = {
         production: packageJson.dependencies || {},
         development: packageJson.devDependencies || {},
-        total: Object.keys(packageJson.dependencies || {}).length +
-                Object.keys(packageJson.devDependencies || {}).length
+        total:
+          Object.keys(packageJson.dependencies || {}).length +
+          Object.keys(packageJson.devDependencies || {}).length,
       };
       console.log('✅ 依赖关系分析完成');
     } catch (error) {
@@ -150,7 +157,7 @@ class BundleAnalyzer {
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return Number.parseFloat((bytes / k ** i).toFixed(dm)) + ' ' + sizes[i];
   }
 
   /**
@@ -169,18 +176,24 @@ class BundleAnalyzer {
 
     // 文件大小分析
     console.log('📁 文件大小分析:');
-    Object.values(this.analysis.files).forEach(file => {
+    Object.values(this.analysis.files).forEach((file) => {
       console.log(`   📄 ${file.fileName}:`);
       console.log(`      📊 原始大小: ${file.sizeFormatted}`);
       console.log(`      📦 Gzip 大小: ${file.gzipSizeFormatted} (压缩 ${file.gzipReduction}%)`);
-      console.log(`      🗜️  Brotli 大小: ${file.brotliSizeFormatted} (压缩 ${file.brotliReduction}%)`);
+      console.log(
+        `      🗜️  Brotli 大小: ${file.brotliSizeFormatted} (压缩 ${file.brotliReduction}%)`
+      );
     });
 
     // 总体统计
     console.log('\n📈 总体统计:');
     console.log(`   📊 总原始大小: ${this.formatBytes(this.analysis.totalSize)}`);
-    console.log(`   📦 Gzip 总大小: ${this.formatBytes(this.analysis.totalGzipSize)} (压缩 ${this.analysis.compressionRatio.gzip}%)`);
-    console.log(`   🗜️  Brotli 总大小: ${this.formatBytes(this.analysis.totalBrotliSize)} (压缩 ${this.analysis.compressionRatio.brotli}%)\n`);
+    console.log(
+      `   📦 Gzip 总大小: ${this.formatBytes(this.analysis.totalGzipSize)} (压缩 ${this.analysis.compressionRatio.gzip}%)`
+    );
+    console.log(
+      `   🗜️  Brotli 总大小: ${this.formatBytes(this.analysis.totalBrotliSize)} (压缩 ${this.analysis.compressionRatio.brotli}%)\n`
+    );
 
     // 依赖分析
     if (this.analysis.dependencies.total > 0) {
@@ -215,7 +228,7 @@ class BundleAnalyzer {
       console.log('   ✅ 包大小优秀！');
     }
 
-    const gzipReduction = parseFloat(this.analysis.compressionRatio.gzip);
+    const gzipReduction = Number.parseFloat(this.analysis.compressionRatio.gzip);
     if (gzipReduction < 60) {
       console.log('   🔍 Gzip 压缩率较低，可能需要检查代码重复');
     } else if (gzipReduction > 80) {
@@ -237,8 +250,8 @@ class BundleAnalyzer {
       environment: {
         nodeVersion: process.version,
         platform: process.platform,
-        arch: process.arch
-      }
+        arch: process.arch,
+      },
     };
 
     const outputPath = join(this.distDir, 'bundle-analysis.json');
@@ -270,7 +283,6 @@ class BundleAnalyzer {
       this.saveAnalysis();
 
       console.log('\n✨ 分析完成！');
-
     } catch (error) {
       console.error('\n❌ 分析失败:', error.message);
       process.exit(1);

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 // 使用完全独立的 SatsNet API 客户端（不引用任何 src 文件）
 import { SatsNetClient } from './standalone-client';
@@ -14,18 +14,12 @@ export async function GET(request: NextRequest) {
     // 简单验证
     if (!name) {
       console.log('验证失败: name 参数为空');
-      return NextResponse.json(
-        { error: 'Name 参数是必需的' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 参数是必需的' }, { status: 400 });
     }
 
     if (name.length < 1 || name.length > 100) {
       console.log('验证失败: name 长度不合规:', name.length);
-      return NextResponse.json(
-        { error: 'Name 长度必须在 1-100 字符之间' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 长度必须在 1-100 字符之间' }, { status: 400 });
     }
 
     console.log('验证通过，开始创建 SatsNet 客户端...');
@@ -35,14 +29,14 @@ export async function GET(request: NextRequest) {
       baseUrl: 'https://apiprd.ordx.market',
       network: 'testnet',
       timeout: 30000,
-      retries: 2
+      retries: 2,
     });
 
     console.log('SatsNet 客户端创建成功');
     console.log('客户端配置:', {
       baseUrl: client.config?.baseUrl || 'https://apiprd.ordx.market',
       network: client.config?.network || 'mainnet',
-      timeout: client.config?.timeout || 30000
+      timeout: client.config?.timeout || 30000,
     });
 
     console.log('开始调用 getNameInfo 方法，参数:', name);
@@ -61,10 +55,9 @@ export async function GET(request: NextRequest) {
         functionName: 'getNameInfo',
         parameter: name,
         dataType: typeof nameInfo,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
-
   } catch (error) {
     console.error('=== getNames API 错误详情 ===');
     console.error('错误对象:', error);
@@ -92,7 +85,7 @@ export async function GET(request: NextRequest) {
     console.error('处理后的错误信息:', {
       message: errorMessage,
       code: errorCode,
-      data: errorData
+      data: errorData,
     });
 
     return NextResponse.json(
@@ -108,8 +101,8 @@ export async function GET(request: NextRequest) {
           platform: process.platform,
           environment: process.env.NODE_ENV,
           parameter: name || 'unknown',
-          errorStack: error instanceof Error ? error.stack : null
-        }
+          errorStack: error instanceof Error ? error.stack : null,
+        },
       },
       { status: 500 }
     );

@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-
 // 演示压缩配置的用法
 import { SatsNetClient } from '@btclib/satsnet-api';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,10 +15,7 @@ export async function GET(request: NextRequest) {
     // 简单验证
     if (!name) {
       console.log('验证失败: name 参数为空');
-      return NextResponse.json(
-        { error: 'Name 参数是必需的' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 参数是必需的' }, { status: 400 });
     }
 
     console.log('验证通过，开始创建 SatsNet 客户端...');
@@ -74,16 +70,17 @@ export async function GET(request: NextRequest) {
           compression ? 'compression-enabled' : 'compression-disabled',
           'user-controlled-compression',
           'no-brotli-issues',
-          'flexible-configuration'
+          'flexible-configuration',
         ],
       },
       usage: {
         note: '通过 ?compression=true 参数可以启用压缩',
-        warning: compression ? '已启用压缩，请注意 Brotli 兼容性问题' : '已禁用压缩，确保最大兼容性',
-        recommended: '在 Next.js 环境中建议保持 compression=false'
-      }
+        warning: compression
+          ? '已启用压缩，请注意 Brotli 兼容性问题'
+          : '已禁用压缩，确保最大兼容性',
+        recommended: '在 Next.js 环境中建议保持 compression=false',
+      },
     });
-
   } catch (error) {
     console.error('=== 压缩配置演示 API 错误详情 ===');
     console.error('错误对象:', error);
@@ -110,7 +107,7 @@ export async function GET(request: NextRequest) {
     console.error('处理后的错误信息:', {
       message: errorMessage,
       code: errorCode,
-      data: errorData
+      data: errorData,
     });
 
     return NextResponse.json(
@@ -134,8 +131,8 @@ export async function GET(request: NextRequest) {
         help: {
           compressionIssue: '如果遇到 JSON 解析错误，请设置 compression=false',
           brotliIssue: '避免使用 brotli 压缩，推荐使用 gzip 或 deflate',
-          nextjsTip: '在 Next.js 环境中建议禁用压缩以确保兼容性'
-        }
+          nextjsTip: '在 Next.js 环境中建议禁用压缩以确保兼容性',
+        },
       },
       { status: 500 }
     );

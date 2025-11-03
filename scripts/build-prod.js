@@ -6,8 +6,8 @@
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join, basename } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { basename, join } from 'path';
 import { minify } from 'terser';
 
 class ProductionBuilder {
@@ -49,12 +49,12 @@ class ProductionBuilder {
     try {
       // 使用 Bun 构建 ESM
       execSync('bun build src/index.ts --outdir dist --target node --format esm --splitting', {
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
       // 生成 TypeScript 声明文件
       execSync('tsc --project tsconfig.build.json && tsc-alias -p tsconfig.build.json', {
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
       console.log('✅ ESM 构建完成');
@@ -70,9 +70,12 @@ class ProductionBuilder {
     console.log('📦 构建 CommonJS 格式...');
 
     try {
-      execSync('bun build src/index.ts --outdir dist --target node --format cjs --outfile index.cjs', {
-        stdio: 'inherit'
-      });
+      execSync(
+        'bun build src/index.ts --outdir dist --target node --format cjs --outfile index.cjs',
+        {
+          stdio: 'inherit',
+        }
+      );
 
       console.log('✅ CommonJS 构建完成');
     } catch (error) {
@@ -129,8 +132,8 @@ class ProductionBuilder {
         },
         sourceMap: {
           filename: basename(outputFile),
-          url: basename(outputFile) + '.map'
-        }
+          url: basename(outputFile) + '.map',
+        },
       };
 
       const result = await minify(inputCode, options);
@@ -148,14 +151,14 @@ class ProductionBuilder {
       // 计算压缩率
       const originalSize = Buffer.byteLength(inputCode, 'utf8');
       const minifiedSize = Buffer.byteLength(result.code, 'utf8');
-      const reduction = ((originalSize - minifiedSize) / originalSize * 100).toFixed(2);
+      const reduction = (((originalSize - minifiedSize) / originalSize) * 100).toFixed(2);
 
       console.log(`✅ 压缩完成: ${originalSize}B → ${minifiedSize}B (减少 ${reduction}%)`);
 
       return {
         originalSize,
         minifiedSize,
-        reduction: parseFloat(reduction)
+        reduction: Number.parseFloat(reduction),
       };
     } catch (error) {
       throw new Error(`压缩失败: ${error.message}`);
@@ -175,21 +178,19 @@ class ProductionBuilder {
       totalSize: {
         original: buildResults.reduce((sum, r) => sum + r.originalSize, 0),
         minified: buildResults.reduce((sum, r) => sum + r.minifiedSize, 0),
-        reduction: 0
-      }
+        reduction: 0,
+      },
     };
 
     buildInfo.totalSize.reduction = (
-      (buildInfo.totalSize.original - buildInfo.totalSize.minified) /
-      buildInfo.totalSize.original * 100
+      ((buildInfo.totalSize.original - buildInfo.totalSize.minified) /
+        buildInfo.totalSize.original) *
+      100
     ).toFixed(2);
 
-    writeFileSync(
-      join(this.distDir, 'build-info.json'),
-      JSON.stringify(buildInfo, null, 2)
-    );
+    writeFileSync(join(this.distDir, 'build-info.json'), JSON.stringify(buildInfo, null, 2));
 
-    console.log(`📊 构建信息已保存到: build-info.json`);
+    console.log('📊 构建信息已保存到: build-info.json');
   }
 
   /**
@@ -232,13 +233,7 @@ class ProductionBuilder {
   async validateBuild() {
     console.log('🔍 验证构建结果...');
 
-    const requiredFiles = [
-      'index.js',
-      'index.cjs',
-      'index.min.js',
-      'index.min.cjs',
-      'index.d.ts'
-    ];
+    const requiredFiles = ['index.js', 'index.cjs', 'index.min.js', 'index.min.cjs', 'index.d.ts'];
 
     const missingFiles = [];
     for (const file of requiredFiles) {
@@ -261,12 +256,14 @@ class ProductionBuilder {
     const duration = Date.now() - this.startTime;
     const totalOriginal = buildResults.reduce((sum, r) => sum + r.originalSize, 0);
     const totalMinified = buildResults.reduce((sum, r) => sum + r.minifiedSize, 0);
-    const totalReduction = ((totalOriginal - totalMinified) / totalOriginal * 100).toFixed(2);
+    const totalReduction = (((totalOriginal - totalMinified) / totalOriginal) * 100).toFixed(2);
 
     console.log('\n🎉 构建完成！\n');
     console.log('📊 构建摘要:');
     console.log(`   ⏱️  构建时间: ${(duration / 1000).toFixed(2)}s`);
-    console.log(`   📦 总大小: ${(totalOriginal / 1024).toFixed(2)}KB → ${(totalMinified / 1024).toFixed(2)}KB`);
+    console.log(
+      `   📦 总大小: ${(totalOriginal / 1024).toFixed(2)}KB → ${(totalMinified / 1024).toFixed(2)}KB`
+    );
     console.log(`   📉 压缩率: ${totalReduction}%`);
     console.log('\n📁 生成文件:');
 
@@ -333,7 +330,6 @@ class ProductionBuilder {
       this.printSummary(buildResults);
 
       console.log('\n✨ 生产构建完成！可以发布了。');
-
     } catch (error) {
       console.error('\n❌ 构建失败:', error.message);
       process.exit(1);

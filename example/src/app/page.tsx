@@ -46,9 +46,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          SatsNet API - getNames 测试
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">SatsNet API - getNames 测试</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -106,7 +104,9 @@ export default function Home() {
               {result.timestamp && (
                 <div>
                   <span className="font-medium text-gray-700">时间戳:</span>
-                  <span className="ml-2 text-gray-900">{new Date(result.timestamp).toLocaleString()}</span>
+                  <span className="ml-2 text-gray-900">
+                    {new Date(result.timestamp).toLocaleString()}
+                  </span>
                 </div>
               )}
             </div>

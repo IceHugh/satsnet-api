@@ -44,7 +44,8 @@ export async function onRequest(context: {
         status: 'error',
       }),
       {
-        status: error instanceof Error && 'status' in error ? (error as { status: number }).status : 500,
+        status:
+          error instanceof Error && 'status' in error ? (error as { status: number }).status : 500,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
@@ -87,10 +88,9 @@ async function handleApiRequest(
         const value = url.searchParams.get('value');
 
         if (value) {
-          return { data: await client.getUtxosByValue(address, parseInt(value)) };
-        } else {
-          return { data: await client.getPlainUtxos(address) };
+          return { data: await client.getUtxosByValue(address, Number.parseInt(value)) };
         }
+        return { data: await client.getPlainUtxos(address) };
       }
 
       if (path.startsWith('allutxos/address/')) {
@@ -125,8 +125,8 @@ async function handleApiRequest(
 
       if (path.startsWith('v3/tick/holders/')) {
         const ticker = path.split('/')[4];
-        const start = parseInt(params.start || '0');
-        const limit = parseInt(params.limit || '10');
+        const start = Number.parseInt(params.start || '0');
+        const limit = Number.parseInt(params.limit || '10');
         return { data: await client.getTickerHolders(ticker, start, limit) };
       }
 
@@ -134,8 +134,8 @@ async function handleApiRequest(
         const parts = path.split('/');
         const address = parts[4];
         const ticker = parts[5];
-        const start = parseInt(params.start || '0');
-        const limit = parseInt(params.limit || '10');
+        const start = Number.parseInt(params.start || '0');
+        const limit = Number.parseInt(params.limit || '10');
         return { data: await client.getAddressAssetHolders(address, ticker, start, limit) };
       }
 
@@ -150,14 +150,13 @@ async function handleApiRequest(
 
         if (parts.length > 4) {
           const sub = parts[4];
-          const page = parseInt(params.page || '1');
-          const pagesize = parseInt(params.pagesize || '10');
+          const page = Number.parseInt(params.page || '1');
+          const pagesize = Number.parseInt(params.pagesize || '10');
           return { data: await client.getNameSubUtxos(address, sub, page, pagesize) };
-        } else {
-          const start = parseInt(params.start || '0');
-          const limit = parseInt(params.limit || '100');
-          return { data: await client.getNameListByAddress(address, start, limit) };
         }
+        const start = Number.parseInt(params.start || '0');
+        const limit = Number.parseInt(params.limit || '100');
+        return { data: await client.getNameListByAddress(address, start, limit) };
       }
 
       throw new Error(`Endpoint not found: ${path}`);

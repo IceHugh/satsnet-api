@@ -39,7 +39,13 @@
     "deno": ">=1.30.0"
   },
   "runtime": {
-    "supports": ["node", "bun", "deno", "edge-runtime", "browser"],
+    "supports": [
+      "node",
+      "bun",
+      "deno",
+      "edge-runtime",
+      "browser"
+    ],
     "universal": true,
     "isomorphic": true
   },
@@ -118,8 +124,8 @@
     "test:api-types": "bun run scripts/run-api-tests.ts",
     "test:cloudflare": "bun test tests/cloudflare",
     "type-check": "tsc --noEmit",
-    "lint": "bunx @biomejs/biome check src/ tests/",
-    "lint:fix": "bunx @biomejs/biome check --fix src/ tests/",
+    "lint": "bunx @biomejs/biome check",
+    "lint:fix": "bunx @biomejs/biome check --fix",
     "audit": "bun audit",
     "audit:fix": "bun audit --fix",
     "clean": "rm -rf dist",

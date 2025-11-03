@@ -58,6 +58,6 @@ const webBundlePath = path.join(distDir, 'web.js');
 fs.copyFileSync(indexPath, webBundlePath);
 
 console.log('✅ Cloudflare Pages post-processing complete');
-console.log(`📁 Processed files:`);
+console.log('📁 Processed files:');
 console.log(`   - ${indexPath}`);
 console.log(`   - ${webBundlePath}`);

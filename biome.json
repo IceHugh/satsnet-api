@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/dist/**", "!**/node_modules/**", "!**/*.lockb", "!**/coverage/**"]
+    "includes": ["src/**", "*.md", "*.json"]
   },
   "formatter": {
     "enabled": true,

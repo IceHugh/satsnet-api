@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-
 // 使用修复后的 @btclib/satsnet-api 包，配置 isNextJS: true
 import { SatsNetClient } from '@btclib/satsnet-api';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,18 +13,12 @@ export async function GET(request: NextRequest) {
     // 简单验证
     if (!name) {
       console.log('验证失败: name 参数为空');
-      return NextResponse.json(
-        { error: 'Name 参数是必需的' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 参数是必需的' }, { status: 400 });
     }
 
     if (name.length < 1 || name.length > 100) {
       console.log('验证失败: name 长度不合规:', name.length);
-      return NextResponse.json(
-        { error: 'Name 长度必须在 1-100 字符之间' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name 长度必须在 1-100 字符之间' }, { status: 400 });
     }
 
     console.log('验证通过，开始创建修复版 SatsNet 客户端...');
@@ -72,14 +65,9 @@ export async function GET(request: NextRequest) {
           compression: client.config?.compression,
           acceptEncoding: client.config?.acceptEncoding,
         },
-        features: [
-          'user-controlled-compression',
-          'simplified-configuration',
-          'no-brotli-issues'
-        ],
-      }
+        features: ['user-controlled-compression', 'simplified-configuration', 'no-brotli-issues'],
+      },
     });
-
   } catch (error) {
     console.error('=== getNames API 错误详情 ===');
     console.error('错误对象:', error);
@@ -107,7 +95,7 @@ export async function GET(request: NextRequest) {
     console.error('处理后的错误信息:', {
       message: errorMessage,
       code: errorCode,
-      data: errorData
+      data: errorData,
     });
 
     return NextResponse.json(
@@ -126,7 +114,7 @@ export async function GET(request: NextRequest) {
           errorStack: error instanceof Error ? error.stack : null,
           package: '@btclib/satsnet-api',
           version: '1.1.0',
-        }
+        },
       },
       { status: 500 }
     );
