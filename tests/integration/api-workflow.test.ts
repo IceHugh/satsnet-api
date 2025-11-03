@@ -3,7 +3,7 @@
  */
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
-import { SatsNetClient } from '@/api/satsnet-client';
+import { SatsNetClient, type BatchRequestParams } from '@/api/satsnet-client';
 import {
   apiEndpoints,
   realAddresses,
@@ -285,9 +285,7 @@ describe('SatsNet API Integration Tests', () => {
     };
 
     // 重试执行批量请求
-    const executeBatchWithRetry = async (
-      requests: Array<{ method: string; params: unknown[] }>
-    ): Promise<unknown[]> => {
+    const executeBatchWithRetry = async (requests: BatchRequestParams[]): Promise<unknown[]> => {
       const maxRetries = 3;
       let retryCount = 0;
 
