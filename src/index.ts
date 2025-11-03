@@ -41,9 +41,9 @@ export { createSafeClient, SafeSatsNetClient, safeSatsnet } from '@/utils/api-wr
 
 // Export utilities
 export { ErrorHandler } from '@/utils/errors';
+export type { HttpConfig, PerformanceMetrics } from '@/utils/http';
 export { HttpClient } from '@/utils/http';
 export { createHttpClient } from '@/utils/http-factory';
-export type { HttpConfig, PerformanceMetrics } from '@/utils/http';
 export {
   isError,
   isSuccess,

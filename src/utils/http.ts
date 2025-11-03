@@ -3,8 +3,8 @@
  * Works in Node.js, browsers, and edge environments including Cloudflare Pages
  */
 
-import { ofetch, type $Fetch } from 'ofetch';
-import type { ApiConfig, Network } from '@/types';
+import { type $Fetch, ofetch } from 'ofetch';
+import type { ApiConfig } from '@/types';
 import { SatsnetApiError } from '@/types';
 
 /**
@@ -29,6 +29,17 @@ export interface HttpConfig extends ApiConfig {
   retry?: boolean;
   retryDelay?: number;
   retryCount?: number;
+}
+
+/**
+ * Ofetch configuration options
+ */
+interface OfetchOptions {
+  baseURL?: string;
+  headers?: Record<string, string> | undefined;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
 }
 
 /**
@@ -59,10 +70,14 @@ export class HttpClient {
     };
 
     // Create ofetch instance with configuration
-    const fetchOptions: any = {
+    const fetchOptions: OfetchOptions = {
       baseURL: this.config.baseUrl,
-      headers: this.config.headers,
     };
+
+    // Only include headers if defined
+    if (this.config.headers) {
+      fetchOptions.headers = this.config.headers;
+    }
 
     // Only include defined options
     if (this.config.timeout !== undefined) {
@@ -75,7 +90,7 @@ export class HttpClient {
       fetchOptions.retryDelay = this.config.retryDelay;
     }
 
-    this.fetch = ofetch.create(fetchOptions);
+    this.fetch = ofetch.create(fetchOptions as any);
 
     this.metrics = {
       requestCount: 0,
@@ -191,7 +206,7 @@ export class HttpClient {
   /**
    * Record error metrics
    */
-  private recordError(start: number, error: unknown): void {
+  private recordError(start: number, _error: unknown): void {
     if (!this.config.metrics) return;
 
     this.recordSuccess(start);
@@ -221,6 +236,32 @@ export class HttpClient {
   }
 
   /**
+   * Handle request errors
+   */
+  private handleRequestError(error: unknown, url: string): never {
+    // Handle known error types
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new SatsnetApiError('Request timeout', 408, { url });
+      }
+
+      if ('status' in error && typeof error.status === 'number') {
+        const statusCode = error.status;
+        if (statusCode >= 400 && statusCode < 500) {
+          throw new SatsnetApiError(
+            `HTTP ${statusCode}: ${statusCode === 404 ? 'Not Found' : 'Request Failed'}`,
+            statusCode,
+            { url, status: statusCode }
+          );
+        }
+      }
+    }
+
+    // Rethrow unknown errors
+    throw error;
+  }
+
+  /**
    * GET request
    */
   async get<T>(path: string, params: Record<string, unknown> = {}): Promise<T> {
@@ -247,27 +288,7 @@ export class HttpClient {
       return this.processResponse<T>(response);
     } catch (error) {
       this.recordError(startTime, error);
-
-      // Handle known error types
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new SatsnetApiError('Request timeout', 408, { url });
-        }
-
-        if ('status' in error && typeof error.status === 'number') {
-          const statusCode = error.status;
-          if (statusCode >= 400 && statusCode < 500) {
-            throw new SatsnetApiError(
-              `HTTP ${statusCode}: ${statusCode === 404 ? 'Not Found' : 'Request Failed'}`,
-              statusCode,
-              { url, status: statusCode }
-            );
-          }
-        }
-      }
-
-      // Rethrow unknown errors
-      throw error;
+      this.handleRequestError(error, url);
     }
   }
 
@@ -289,24 +310,7 @@ export class HttpClient {
       return this.processResponse<T>(response);
     } catch (error) {
       this.recordError(startTime, error);
-
-      // Handle known error types
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new SatsnetApiError('Request timeout', 408, { url });
-        }
-
-        if ('status' in error && typeof error.status === 'number') {
-          const statusCode = error.status;
-          throw new SatsnetApiError(
-            `HTTP ${statusCode}: ${statusCode === 404 ? 'Not Found' : 'Request Failed'}`,
-            statusCode,
-            { url, status: statusCode }
-          );
-        }
-      }
-
-      throw error;
+      this.handleRequestError(error, url);
     }
   }
 
@@ -368,10 +372,14 @@ export class HttpClient {
     this.config = { ...this.config, ...newConfig };
 
     // Recreate ofetch instance with new config
-    const fetchOptions: any = {
+    const fetchOptions: OfetchOptions = {
       baseURL: this.config.baseUrl,
-      headers: this.config.headers,
     };
+
+    // Only include headers if defined
+    if (this.config.headers) {
+      fetchOptions.headers = this.config.headers;
+    }
 
     if (this.config.timeout !== undefined) {
       fetchOptions.timeout = this.config.timeout;
@@ -383,7 +391,7 @@ export class HttpClient {
       fetchOptions.retryDelay = this.config.retryDelay;
     }
 
-    this.fetch = ofetch.create(fetchOptions);
+    this.fetch = ofetch.create(fetchOptions as any);
   }
 
   /**
